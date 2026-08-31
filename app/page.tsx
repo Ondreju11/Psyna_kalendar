@@ -13,7 +13,13 @@ import {
   LoaderCircle,
   MapPin,
 } from 'lucide-react';
-import { type SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import {
+  type SyntheticEvent,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +65,17 @@ const emptyForm: FormData = {
 
 const fieldClass =
   'mt-2 h-11 rounded-xl border-stone-200 bg-white px-3 shadow-none focus-visible:border-[#38634f] focus-visible:ring-[#38634f]/15';
+
+function subscribeToUserAgent() {
+  return () => {};
+}
+
+function isMessengerOnIos() {
+  const userAgent = navigator.userAgent;
+  const isIos = /iPad|iPhone|iPod/iu.test(userAgent);
+  const isMessenger = /FBAN|FBAV|FB_IAB|MessengerForiOS/iu.test(userAgent);
+  return isIos && isMessenger;
+}
 
 function encodeEvent(event: EventData) {
   const bytes = new TextEncoder().encode(JSON.stringify(event));
@@ -266,6 +283,17 @@ function AppHeader({ compact = false }: { compact?: boolean }) {
 function EventView({ event }: { event: EventData }) {
   const links = useMemo(() => calendarLinks(event), [event]);
   const icsUrl = useMemo(() => calendarIcsUrl(event), [event]);
+  const messengerOnIos = useSyncExternalStore(subscribeToUserAgent, isMessengerOnIos, () => false);
+  const [copyNotice, setCopyNotice] = useState('');
+
+  async function copyInvitationLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopyNotice('Odkaz je zkopírovaný. Vložte ho do Safari.');
+    } catch {
+      setCopyNotice('Použijte nabídku ••• a zvolte Otevřít v prohlížeči.');
+    }
+  }
 
   function createOwnEvent() {
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -320,13 +348,33 @@ function EventView({ event }: { event: EventData }) {
           )}
 
           <div className="space-y-3 px-5 py-6 sm:px-8 sm:py-8">
-            <a
-              href={icsUrl}
-              className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[#38634f] px-2.5 text-base font-medium whitespace-nowrap text-white transition-all hover:bg-[#2f5543] active:translate-y-px"
-            >
-              <Download aria-hidden="true" />
-              Přidat do kalendáře
-            </a>
+            {messengerOnIos ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+                <p className="font-medium">Apple Kalendář otevřete mimo Messenger</p>
+                <p className="mt-1.5 leading-6 text-amber-900/80">
+                  Klepněte vpravo nahoře na ••• a zvolte Otevřít v prohlížeči. V Safari
+                  potom použijte tlačítko Přidat do kalendáře.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 h-10 rounded-xl border-amber-300 bg-white px-3 text-amber-950 hover:bg-amber-100"
+                  onClick={copyInvitationLink}
+                >
+                  <Copy aria-hidden="true" />
+                  Zkopírovat odkaz pro Safari
+                </Button>
+                {copyNotice && <output className="mt-2 block text-xs">{copyNotice}</output>}
+              </div>
+            ) : (
+              <a
+                href={icsUrl}
+                className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[#38634f] px-2.5 text-base font-medium whitespace-nowrap text-white transition-all hover:bg-[#2f5543] active:translate-y-px"
+              >
+                <Download aria-hidden="true" />
+                Přidat do kalendáře
+              </a>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 type="button"
@@ -350,8 +398,8 @@ function EventView({ event }: { event: EventData }) {
               </Button>
             </div>
             <p className="pt-1 text-center text-xs leading-5 text-stone-500">
-              Apple, Android, počítač i další kalendáře podporují soubor .ics.
-              Konečné potvrzení zajišťuje vaše kalendářová aplikace.
+              Apple, Android, počítač i další kalendáře podporují soubor .ics. Konečné
+              potvrzení zajišťuje vaše kalendářová aplikace.
             </p>
           </div>
         </article>
