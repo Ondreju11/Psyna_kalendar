@@ -9,9 +9,9 @@ import {
   Download,
   ExternalLink,
   Link2,
-  LoaderCircle,
   MapPin,
 } from 'lucide-react';
+import { strFromU8, strToU8, unzlibSync, zlibSync } from 'fflate';
 import {
   type SyntheticEvent,
   useEffect,
@@ -48,9 +48,10 @@ type FormData = Omit<EventData, 'v' | 'timeZone' | 'reminder'> & {
 };
 
 type GeneratedLink = {
-  long: string;
-  short?: string;
+  value: string;
 };
+
+type CompactEvent = [string, string, string, string, string, string, number];
 
 const emptyForm: FormData = {
   title: '',
@@ -77,12 +78,28 @@ function isMessengerOnIos() {
 }
 
 function encodeEvent(event: EventData) {
-  const bytes = new TextEncoder().encode(JSON.stringify(event));
+  const compact: CompactEvent = [
+    event.title,
+    event.start,
+    event.end,
+    event.location,
+    event.description,
+    event.website,
+    event.reminder,
+  ];
+  const bytes = zlibSync(strToU8(JSON.stringify(compact)), { level: 9 });
   let binary = '';
   bytes.forEach((byte) => {
     binary += String.fromCharCode(byte);
   });
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
+}
+
+function decodeBase64Url(value: string) {
+  const base64 = value.replaceAll('-', '+').replaceAll('_', '/');
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(base64 + padding);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
 function isSafeHttpUrl(value: string) {
@@ -95,13 +112,24 @@ function isSafeHttpUrl(value: string) {
   }
 }
 
-function decodeEvent(value: string): EventData | null {
+function decodeEvent(value: string, compressed = false): EventData | null {
   try {
-    const base64 = value.replaceAll('-', '+').replaceAll('_', '/');
-    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
-    const binary = atob(base64 + padding);
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<EventData>;
+    const bytes = decodeBase64Url(value);
+    const json = compressed ? strFromU8(unzlibSync(bytes)) : new TextDecoder().decode(bytes);
+    const decoded = JSON.parse(json) as Partial<EventData> | unknown[];
+    const parsed: Partial<EventData> = Array.isArray(decoded)
+      ? {
+          v: 1,
+          title: decoded[0] as string,
+          start: decoded[1] as string,
+          end: decoded[2] as string,
+          location: decoded[3] as string,
+          description: decoded[4] as string,
+          website: decoded[5] as string,
+          reminder: decoded[6] as number,
+          timeZone: TIME_ZONE,
+        }
+      : decoded;
 
     if (
       parsed.v !== 1 ||
@@ -451,21 +479,21 @@ export default function Home() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [sharedEvent, setSharedEvent] = useState<EventData | null>(null);
   const [invalidSharedEvent, setInvalidSharedEvent] = useState(false);
-  const [shorten, setShorten] = useState(true);
   const [generated, setGenerated] = useState<GeneratedLink | null>(null);
-  const [shortening, setShortening] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
     const readHash = () => {
-      const match = /^#e=(.+)$/u.exec(window.location.hash);
+      const compactMatch = /^#c=(.+)$/u.exec(window.location.hash);
+      const legacyMatch = /^#e=(.+)$/u.exec(window.location.hash);
+      const match = compactMatch ?? legacyMatch;
       if (!match) {
         setSharedEvent(null);
         setInvalidSharedEvent(false);
         return;
       }
-      const event = decodeEvent(match[1]);
+      const event = decodeEvent(match[1], Boolean(compactMatch));
       setSharedEvent(event);
       setInvalidSharedEvent(!event);
     };
@@ -498,7 +526,7 @@ export default function Home() {
     setNotice('');
   }
 
-  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+  function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setNotice('');
@@ -530,42 +558,13 @@ export default function Home() {
       timeZone: TIME_ZONE,
     };
     const baseUrl = `${window.location.origin}${window.location.pathname}`;
-    const longUrl = `${baseUrl}#e=${encodeEvent(eventData)}`;
-    setGenerated({ long: longUrl });
-
-    if (!shorten) return;
-
-    setShortening(true);
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 10000);
-    try {
-      const response = await fetch('https://spoo.me/api/v1/shorten', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ long_url: longUrl }),
-        signal: controller.signal,
-      });
-      const result = (await response.json()) as {
-        short_url?: string;
-        detail?: string;
-      };
-      if (!response.ok || !result.short_url) {
-        throw new Error(result.detail || 'Zkrácení se nepodařilo.');
-      }
-      setGenerated({ long: longUrl, short: result.short_url });
-    } catch {
-      setNotice('Krátký odkaz se nepodařilo vytvořit. Původní odkaz je plně funkční.');
-    } finally {
-      window.clearTimeout(timeout);
-      setShortening(false);
-    }
+    setGenerated({ value: `${baseUrl}#c=${encodeEvent(eventData)}` });
   }
 
   async function copyLink() {
     if (!generated) return;
-    const link = generated.short || generated.long;
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(generated.value);
       setNotice('Odkaz je zkopírovaný.');
       window.setTimeout(() => setNotice(''), 2500);
     } catch {
@@ -726,22 +725,6 @@ export default function Home() {
               </NativeSelect>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm text-stone-600">
-              <input
-                id="shorten-link"
-                type="checkbox"
-                checked={shorten}
-                onChange={(event) => setShorten(event.target.checked)}
-                className="mt-0.5 size-4 accent-[#38634f]"
-              />
-              <label htmlFor="shorten-link" className="cursor-pointer">
-                <strong className="font-medium text-stone-800">Zkrátit odkaz pro sdílení</strong>
-                <span className="mt-0.5 block text-xs leading-5 text-stone-500">
-                  Krátký odkaz vytvoří služba spoo.me. Původní zůstane k dispozici.
-                </span>
-              </label>
-            </div>
-
             {error && (
               <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
@@ -752,15 +735,10 @@ export default function Home() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={shortening}
                 className="h-12 w-full rounded-xl bg-[#38634f] text-base text-white hover:bg-[#2f5543]"
               >
-                {shortening ? (
-                  <LoaderCircle aria-hidden="true" className="animate-spin" />
-                ) : (
-                  <Link2 aria-hidden="true" />
-                )}
-                {shortening ? 'Zkracuji odkaz…' : 'Vytvořit odkaz'}
+                <Link2 aria-hidden="true" />
+                Vytvořit odkaz
               </Button>
             </div>
           </form>
@@ -775,7 +753,7 @@ export default function Home() {
                 <Input
                   readOnly
                   aria-label="Vygenerovaný odkaz"
-                  value={generated.short || generated.long}
+                  value={generated.value}
                   onFocus={(event) => event.target.select()}
                   className="h-11 rounded-xl border-stone-200 bg-stone-50 font-mono text-xs"
                 />
@@ -792,7 +770,7 @@ export default function Home() {
               </div>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs">
                 <a
-                  href={generated.long}
+                  href={generated.value}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 font-medium text-[#38634f] hover:underline"
@@ -800,18 +778,6 @@ export default function Home() {
                   Otevřít událost
                   <ExternalLink aria-hidden="true" className="size-3.5" />
                 </a>
-                {generated.short && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(generated.long);
-                      setNotice('Původní odkaz je zkopírovaný.');
-                    }}
-                    className="text-stone-500 hover:text-stone-900"
-                  >
-                    Kopírovat původní odkaz
-                  </button>
-                )}
               </div>
             </div>
           )}

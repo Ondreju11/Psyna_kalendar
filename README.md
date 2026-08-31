@@ -9,7 +9,7 @@ Outlooku a dalších aplikací podporujících formát `.ics`.
 - bez databáze a bez registrace,
 - údaje události jsou zakódované přímo ve sdíleném odkazu,
 - upozornění v `.ics` souboru,
-- volitelné bezplatné zkrácení odkazu přes spoo.me,
+- kompaktní odkaz bez externího zkracovače,
 - časové pásmo `Europe/Prague`,
 - responzivní české rozhraní,
 - automatické nasazení na GitHub Pages.
