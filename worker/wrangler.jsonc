@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "kalendar-akci",
+  "main": "index.js",
+  "compatibility_date": "2026-08-31",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "SITE_URL": "https://ondreju11.github.io/Psyna_kalendar/"
+  },
+  "d1_databases": [
+    {
+      "binding": "EVENTS",
+      "database_name": "psyna-kalendar-events",
+      "database_id": "5d2191cd-ebdc-405d-b65b-649cc4643ec7",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

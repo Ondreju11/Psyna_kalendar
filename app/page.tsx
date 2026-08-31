@@ -29,6 +29,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 const TIME_ZONE = 'Europe/Prague';
+const EVENTS_API = 'https://kalendar-akci.kt-mcp-9992a27c899e8bf9.workers.dev';
 const ALLOWED_REMINDERS = new Set([15, 30, 60, 120, 1440, 2880, 10080]);
 
 type EventData = {
@@ -49,6 +50,13 @@ type FormData = Omit<EventData, 'v' | 'timeZone' | 'reminder'> & {
 
 type GeneratedLink = {
   value: string;
+  manageUrl?: string;
+  fallback?: boolean;
+};
+
+type ManagedEvent = {
+  id: string;
+  editKey: string;
 };
 
 type CompactEvent = [string, string, string, string, string, string, number];
@@ -461,15 +469,17 @@ function InvalidEventView() {
         <p className="mt-2 text-sm leading-6 text-stone-500">
           Údaje události jsou neúplné nebo byl odkaz poškozen.
         </p>
-        <Button
-          type="button"
-          className="mt-6 h-11 rounded-xl bg-[#38634f] px-5 text-white hover:bg-[#2f5543]"
-          onClick={() => {
-            window.location.hash = '';
-          }}
-        >
-          Otevřít generátor
-        </Button>
+      </div>
+    </main>
+  );
+}
+
+function LoadingEventView() {
+  return (
+    <main className="grid min-h-screen place-items-center px-4 py-10">
+      <div className="text-center text-sm text-stone-500">
+        <CalendarDays aria-hidden="true" className="mx-auto mb-3 size-6 text-[#38634f]" />
+        Načítám událost…
       </div>
     </main>
   );
@@ -479,12 +489,77 @@ export default function Home() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [sharedEvent, setSharedEvent] = useState<EventData | null>(null);
   const [invalidSharedEvent, setInvalidSharedEvent] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(false);
+  const [managedEvent, setManagedEvent] = useState<ManagedEvent | null>(null);
   const [generated, setGenerated] = useState<GeneratedLink | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const readHash = () => {
+    const controller = new AbortController();
+
+    const readLocation = async () => {
+      const parameters = new URLSearchParams(window.location.search);
+      const eventId = parameters.get('event');
+      const manageId = parameters.get('manage');
+
+      if (eventId && /^[A-Za-z0-9]{7}$/u.test(eventId)) {
+        setLoadingEvent(true);
+        setInvalidSharedEvent(false);
+        try {
+          const response = await fetch(`${EVENTS_API}/api/events/${eventId}`, {
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error('Událost nebyla nalezena.');
+          const result = (await response.json()) as { event?: EventData };
+          const event = result.event ? decodeEvent(encodeEvent(result.event), true) : null;
+          setSharedEvent(event);
+          setInvalidSharedEvent(!event);
+        } catch (fetchError) {
+          if ((fetchError as Error).name !== 'AbortError') setInvalidSharedEvent(true);
+        } finally {
+          setLoadingEvent(false);
+        }
+        return;
+      }
+
+      const manageMatch = /^#key=([A-Za-z0-9_-]{32,100})$/u.exec(window.location.hash);
+      if (manageId && /^[A-Za-z0-9]{7}$/u.test(manageId) && manageMatch) {
+        setLoadingEvent(true);
+        try {
+          const response = await fetch(`${EVENTS_API}/api/events/${manageId}`, {
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error('Událost nebyla nalezena.');
+          const result = (await response.json()) as { event?: EventData };
+          const loaded = result.event ? decodeEvent(encodeEvent(result.event), true) : null;
+          if (!loaded) throw new Error('Událost není platná.');
+          setForm({
+            title: loaded.title,
+            start: loaded.start,
+            end: loaded.end,
+            location: loaded.location,
+            description: loaded.description,
+            website: loaded.website,
+            reminder: String(loaded.reminder),
+          });
+          setManagedEvent({ id: manageId, editKey: manageMatch[1] });
+          setGenerated({
+            value: `${EVENTS_API}/e/${manageId}`,
+            manageUrl: window.location.href,
+          });
+          setNotice('Událost je otevřená pro úpravy. Veřejný odkaz zůstane stejný.');
+        } catch (fetchError) {
+          if ((fetchError as Error).name !== 'AbortError') {
+            setError('Správcovský odkaz není platný nebo událost už neexistuje.');
+          }
+        } finally {
+          setLoadingEvent(false);
+        }
+        return;
+      }
+
       const compactMatch = /^#c=(.+)$/u.exec(window.location.hash);
       const legacyMatch = /^#e=(.+)$/u.exec(window.location.hash);
       const match = compactMatch ?? legacyMatch;
@@ -497,9 +572,12 @@ export default function Home() {
       setSharedEvent(event);
       setInvalidSharedEvent(!event);
     };
-    readHash();
-    window.addEventListener('hashchange', readHash);
-    return () => window.removeEventListener('hashchange', readHash);
+    void readLocation();
+    window.addEventListener('hashchange', readLocation);
+    return () => {
+      controller.abort();
+      window.removeEventListener('hashchange', readLocation);
+    };
   }, []);
 
   function updateField(field: keyof FormData, value: string) {
@@ -526,7 +604,7 @@ export default function Home() {
     setNotice('');
   }
 
-  function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setNotice('');
@@ -558,7 +636,48 @@ export default function Home() {
       timeZone: TIME_ZONE,
     };
     const baseUrl = `${window.location.origin}${window.location.pathname}`;
-    setGenerated({ value: `${baseUrl}#c=${encodeEvent(eventData)}` });
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(
+        managedEvent ? `${EVENTS_API}/api/events/${managedEvent.id}` : `${EVENTS_API}/api/events`,
+        {
+          method: managedEvent ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: eventData,
+            ...(managedEvent ? { editKey: managedEvent.editKey } : {}),
+          }),
+        },
+      );
+      const result = (await response.json()) as {
+        id?: string;
+        editKey?: string;
+        publicUrl?: string;
+        error?: string;
+      };
+      if (!response.ok || !result.id || !result.publicUrl) {
+        throw new Error(result.error || 'Krátký odkaz se nepodařilo vytvořit.');
+      }
+
+      const editKey = managedEvent?.editKey ?? result.editKey;
+      if (!editKey) throw new Error('Chybí klíč pro správu události.');
+      const management: ManagedEvent = { id: result.id, editKey };
+      const manageUrl = `${baseUrl}?manage=${result.id}#key=${editKey}`;
+      setManagedEvent(management);
+      setGenerated({ value: result.publicUrl, manageUrl });
+      setNotice(
+        managedEvent
+          ? 'Změny jsou uložené. Veřejný odkaz zůstal stejný.'
+          : 'Krátký odkaz je připravený. Správcovský odkaz si bezpečně uložte.',
+      );
+    } catch (submitError) {
+      setGenerated({ value: `${baseUrl}#c=${encodeEvent(eventData)}`, fallback: true });
+      setNotice('Cloudflare teď neodpověděl. Vytvořil jsem funkční záložní odkaz.');
+      setError(submitError instanceof Error ? submitError.message : 'Krátký odkaz selhal.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function copyLink() {
@@ -572,6 +691,26 @@ export default function Home() {
     }
   }
 
+  async function copyManageLink() {
+    if (!generated?.manageUrl) return;
+    try {
+      await navigator.clipboard.writeText(generated.manageUrl);
+      setNotice('Správcovský odkaz je zkopírovaný. Nesdílejte ho s návštěvníky.');
+    } catch {
+      setNotice('Správcovský odkaz označte a zkopírujte ručně.');
+    }
+  }
+
+  function startNewEvent() {
+    setForm(emptyForm);
+    setManagedEvent(null);
+    setGenerated(null);
+    setError('');
+    setNotice('');
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+
+  if (loadingEvent) return <LoadingEventView />;
   if (sharedEvent) return <EventView event={sharedEvent} />;
   if (invalidSharedEvent) return <InvalidEventView />;
 
@@ -735,10 +874,15 @@ export default function Home() {
               <Button
                 type="submit"
                 size="lg"
+                disabled={submitting}
                 className="h-12 w-full rounded-xl bg-[#38634f] text-base text-white hover:bg-[#2f5543]"
               >
                 <Link2 aria-hidden="true" />
-                Vytvořit odkaz
+                {submitting
+                  ? 'Ukládám…'
+                  : managedEvent
+                    ? 'Uložit změny'
+                    : 'Vytvořit krátký odkaz'}
               </Button>
             </div>
           </form>
@@ -747,7 +891,9 @@ export default function Home() {
             <div className="mt-7 border-t border-stone-100 pt-7">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-stone-800">
                 <Check aria-hidden="true" className="size-4 text-[#38634f]" />
-                Odkaz je připravený ke sdílení
+                {generated.fallback
+                  ? 'Záložní odkaz je připravený'
+                  : 'Krátký odkaz je připravený ke sdílení'}
               </div>
               <div className="flex gap-2">
                 <Input
@@ -778,7 +924,44 @@ export default function Home() {
                   Otevřít událost
                   <ExternalLink aria-hidden="true" className="size-3.5" />
                 </a>
+                {managedEvent && (
+                  <button
+                    type="button"
+                    className="font-medium text-stone-500 hover:text-stone-800 hover:underline"
+                    onClick={startNewEvent}
+                  >
+                    Vytvořit novou událost
+                  </button>
+                )}
               </div>
+              {generated.manageUrl && (
+                <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-sm font-medium text-stone-800">Soukromý odkaz pro úpravy</p>
+                  <p className="mt-1 text-xs leading-5 text-stone-500">
+                    Uložte si ho. Kdo ho má, může událost změnit. Návštěvníkům posílejte
+                    pouze krátký odkaz výše.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Input
+                      readOnly
+                      aria-label="Soukromý odkaz pro úpravy"
+                      value={generated.manageUrl}
+                      onFocus={(event) => event.target.select()}
+                      className="h-10 rounded-xl border-stone-200 bg-white font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Kopírovat správcovský odkaz"
+                      className="size-10 shrink-0 rounded-xl border-stone-200 bg-white"
+                      onClick={copyManageLink}
+                    >
+                      <Copy aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

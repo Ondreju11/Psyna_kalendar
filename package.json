@@ -10,7 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "worker:migrate": "cd worker && wrangler d1 migrations apply psyna-kalendar-events --remote --config wrangler.jsonc",
+    "worker:deploy": "cd worker && wrangler deploy --config wrangler.jsonc"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -32,7 +34,8 @@
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
     "tailwindcss": "4.2.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wrangler": "4.127.1"
   },
   "type": "module"
 }
