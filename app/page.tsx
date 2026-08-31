@@ -511,21 +511,7 @@ export default function Home() {
 
       if (eventId && /^[A-Za-z0-9]{7}$/u.test(eventId)) {
         setLoadingEvent(true);
-        setInvalidSharedEvent(false);
-        try {
-          const response = await fetch(`${EVENTS_API}/api/events/${eventId}`, {
-            signal: controller.signal,
-          });
-          if (!response.ok) throw new Error('Událost nebyla nalezena.');
-          const result = (await response.json()) as { event?: EventData };
-          const event = result.event ? decodeEvent(encodeEvent(result.event), true) : null;
-          setSharedEvent(event);
-          setInvalidSharedEvent(!event);
-        } catch (fetchError) {
-          if ((fetchError as Error).name !== 'AbortError') setInvalidSharedEvent(true);
-        } finally {
-          setLoadingEvent(false);
-        }
+        window.location.replace(`${EVENTS_API}/e/${eventId}`);
         return;
       }
 
