@@ -342,7 +342,12 @@ function EventView({ event }: { event: EventData }) {
 
   async function copyInvitationLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const sourceId = new URL(window.location.href).searchParams.get('source');
+      const invitationUrl =
+        sourceId && /^[A-Za-z0-9]{7}$/u.test(sourceId)
+          ? `${EVENTS_API}/e/${sourceId}`
+          : window.location.href;
+      await navigator.clipboard.writeText(invitationUrl);
       setCopyNotice('Odkaz je zkopírovaný. Teď ho vložte do Safari.');
     } catch {
       setCopyNotice('Klepněte na ••• a zvolte Otevřít v externím prohlížeči.');
@@ -565,7 +570,7 @@ export default function Home() {
       const match = compactMatch ?? legacyMatch;
       if (!match) {
         setSharedEvent(null);
-        setInvalidSharedEvent(false);
+        setInvalidSharedEvent(window.location.hash === '#invalid');
         return;
       }
       const event = decodeEvent(match[1], Boolean(compactMatch));

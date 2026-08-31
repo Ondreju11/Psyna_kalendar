@@ -17,9 +17,7 @@ const worker = {
 
     const publicMatch = /^\/e\/([A-Za-z0-9]{7})$/u.exec(url.pathname);
     if (request.method === 'GET' && publicMatch) {
-      const destination = new URL(env.SITE_URL);
-      destination.searchParams.set('event', publicMatch[1]);
-      return Response.redirect(destination.toString(), 302);
+      return redirectToEvent(env, publicMatch[1]);
     }
 
     const apiMatch = /^\/api\/events\/([A-Za-z0-9]{7})$/u.exec(url.pathname);
@@ -40,6 +38,29 @@ const worker = {
 };
 
 export default worker;
+
+async function redirectToEvent(env, id) {
+  const row = await env.EVENTS.prepare('SELECT payload FROM events WHERE id = ?')
+    .bind(id)
+    .first();
+  const destination = new URL(env.SITE_URL);
+
+  if (!row) {
+    destination.hash = 'invalid';
+    return Response.redirect(destination.toString(), 302);
+  }
+
+  try {
+    const event = validateEvent(JSON.parse(row.payload));
+    if (!event) throw new Error('Invalid stored event');
+    destination.searchParams.set('source', id);
+    destination.hash = `e=${encodeBase64Url(JSON.stringify(event))}`;
+    return Response.redirect(destination.toString(), 302);
+  } catch {
+    destination.hash = 'invalid';
+    return Response.redirect(destination.toString(), 302);
+  }
+}
 
 async function getEvent(request, env, id) {
   const row = await env.EVENTS.prepare(
@@ -208,6 +229,13 @@ function randomId() {
 
 function randomToken(byteLength) {
   const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
+}
+
+function encodeBase64Url(value) {
+  const bytes = new TextEncoder().encode(value);
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
