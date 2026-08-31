@@ -161,31 +161,6 @@ function toCalendarTimestamp(date: Date) {
   return date.toISOString().replaceAll('-', '').replaceAll(':', '').replace(/\.\d{3}Z$/u, 'Z');
 }
 
-function escapeIcs(value: string) {
-  return value
-    .replaceAll('\\', '\\\\')
-    .replaceAll('\n', '\\n')
-    .replaceAll(';', '\\;')
-    .replaceAll(',', '\\,');
-}
-
-function foldIcsLine(line: string) {
-  const encoder = new TextEncoder();
-  const chunks: string[] = [];
-  let chunk = '';
-
-  for (const character of line) {
-    if (encoder.encode(chunk + character).length > 73) {
-      chunks.push(chunk);
-      chunk = character;
-    } else {
-      chunk += character;
-    }
-  }
-  chunks.push(chunk);
-  return chunks.join('\r\n ');
-}
-
 function simpleHash(value: string) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -195,34 +170,20 @@ function simpleHash(value: string) {
   return (hash >>> 0).toString(36);
 }
 
-function createIcs(event: EventData) {
+function calendarIcsUrl(event: EventData) {
   const start = zonedLocalToUtc(event.start, event.timeZone);
   const end = zonedLocalToUtc(event.end, event.timeZone);
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Kalendar akci//CS',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${simpleHash(JSON.stringify(event))}@kalendar-akci`,
-    `DTSTAMP:${toCalendarTimestamp(new Date())}`,
-    `DTSTART:${toCalendarTimestamp(start)}`,
-    `DTEND:${toCalendarTimestamp(end)}`,
-    `SUMMARY:${escapeIcs(event.title)}`,
-    `DESCRIPTION:${escapeIcs([event.description, event.website].filter(Boolean).join('\n\n'))}`,
-    `LOCATION:${escapeIcs(event.location)}`,
-    ...(event.website ? [`URL:${event.website}`] : []),
-    'STATUS:CONFIRMED',
-    'BEGIN:VALARM',
-    'ACTION:DISPLAY',
-    `DESCRIPTION:${escapeIcs(event.title)}`,
-    `TRIGGER:-PT${event.reminder}M`,
-    'END:VALARM',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ];
-  return `${lines.map(foldIcsLine).join('\r\n')}\r\n`;
+  const parameters = new URLSearchParams({
+    title: event.title,
+    start: start.toISOString(),
+    end: end.toISOString(),
+    reminder: String(event.reminder),
+    uid: `${simpleHash(JSON.stringify(event))}@kalendar-akci`,
+  });
+  if (event.description) parameters.set('description', event.description);
+  if (event.location) parameters.set('location', event.location);
+  if (event.website) parameters.set('url', event.website);
+  return `https://api.getcal.link/event.ics?${parameters.toString()}`;
 }
 
 function calendarLinks(event: EventData) {
@@ -304,18 +265,7 @@ function AppHeader({ compact = false }: { compact?: boolean }) {
 
 function EventView({ event }: { event: EventData }) {
   const links = useMemo(() => calendarLinks(event), [event]);
-
-  function downloadIcs() {
-    const blob = new Blob([createIcs(event)], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${event.title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/gu, '') || 'udalost'}.ics`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+  const icsUrl = useMemo(() => calendarIcsUrl(event), [event]);
 
   function createOwnEvent() {
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -370,15 +320,13 @@ function EventView({ event }: { event: EventData }) {
           )}
 
           <div className="space-y-3 px-5 py-6 sm:px-8 sm:py-8">
-            <Button
-              type="button"
-              onClick={downloadIcs}
-              size="lg"
-              className="h-12 w-full rounded-xl bg-[#38634f] text-base text-white hover:bg-[#2f5543]"
+            <a
+              href={icsUrl}
+              className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[#38634f] px-2.5 text-base font-medium whitespace-nowrap text-white transition-all hover:bg-[#2f5543] active:translate-y-px"
             >
               <Download aria-hidden="true" />
               Přidat do kalendáře
-            </Button>
+            </a>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 type="button"
@@ -521,18 +469,20 @@ export default function Home() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch(
-        `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`,
-        { signal: controller.signal },
-      );
+      const response = await fetch('https://spoo.me/api/v1/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ long_url: longUrl }),
+        signal: controller.signal,
+      });
       const result = (await response.json()) as {
-        shorturl?: string;
-        errormessage?: string;
+        short_url?: string;
+        detail?: string;
       };
-      if (!response.ok || !result.shorturl) {
-        throw new Error(result.errormessage || 'Zkrácení se nepodařilo.');
+      if (!response.ok || !result.short_url) {
+        throw new Error(result.detail || 'Zkrácení se nepodařilo.');
       }
-      setGenerated({ long: longUrl, short: result.shorturl });
+      setGenerated({ long: longUrl, short: result.short_url });
     } catch {
       setNotice('Krátký odkaz se nepodařilo vytvořit. Původní odkaz je plně funkční.');
     } finally {
@@ -691,7 +641,7 @@ export default function Home() {
               <label htmlFor="shorten-link" className="cursor-pointer">
                 <strong className="font-medium text-stone-800">Vytvořit krátký odkaz zdarma</strong>
                 <span className="mt-0.5 block text-xs leading-5 text-stone-500">
-                  Použije se veřejná služba is.gd. Původní odkaz bude vždy k dispozici.
+                  Použije se veřejná služba spoo.me. Původní odkaz bude vždy k dispozici.
                 </span>
               </label>
             </div>
@@ -717,7 +667,7 @@ export default function Home() {
                 {shortening ? 'Zkracuji odkaz…' : 'Vygenerovat odkaz'}
               </Button>
               <p className="mt-3 text-center text-xs leading-5 text-stone-500">
-                Bez registrace, bez poplatků. Údaje se neukládají do databáze.
+                Bez registrace a bez poplatků. Při zkrácení se odkaz uloží u služby spoo.me.
               </p>
             </div>
           </form>
