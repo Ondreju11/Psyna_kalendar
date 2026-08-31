@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ArrowLeft,
   Bell,
   CalendarDays,
   Check,
@@ -260,6 +259,20 @@ function reminderLabel(minutes: number) {
   return `${minutes} minut předem`;
 }
 
+function datePart(value: string) {
+  return value.split('T')[0] ?? '';
+}
+
+function timePart(value: string) {
+  return value.split('T')[1] ?? '';
+}
+
+function addMinutesToLocalDateTime(value: string, minutes: number) {
+  const timestamp = Date.parse(`${value}:00Z`);
+  if (!Number.isFinite(timestamp)) return '';
+  return new Date(timestamp + minutes * 60_000).toISOString().slice(0, 16);
+}
+
 function AppHeader({ compact = false }: { compact?: boolean }) {
   return (
     <header className={compact ? 'mb-8' : 'mb-8 flex items-center gap-3'}>
@@ -270,9 +283,14 @@ function AppHeader({ compact = false }: { compact?: boolean }) {
         <div>
           <p className="text-sm font-medium text-[#38634f]">Kalendář akcí</p>
           {!compact && (
-            <h1 className="text-xl font-semibold tracking-tight text-stone-950">
-              Vytvořit odkaz na událost
-            </h1>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-stone-950">
+                Vytvořit pozvánku na událost
+              </h1>
+              <p className="mt-0.5 text-xs text-stone-500">
+                Jeden odkaz pro všechny běžné kalendáře.
+              </p>
+            </div>
           )}
         </div>
       </div>
@@ -289,15 +307,10 @@ function EventView({ event }: { event: EventData }) {
   async function copyInvitationLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setCopyNotice('Odkaz je zkopírovaný. Vložte ho do Safari.');
+      setCopyNotice('Odkaz je zkopírovaný. Teď ho vložte do Safari.');
     } catch {
-      setCopyNotice('Použijte nabídku ••• a zvolte Otevřít v prohlížeči.');
+      setCopyNotice('Klepněte na ••• a zvolte Otevřít v externím prohlížeči.');
     }
-  }
-
-  function createOwnEvent() {
-    window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    window.location.reload();
   }
 
   return (
@@ -350,10 +363,11 @@ function EventView({ event }: { event: EventData }) {
           <div className="space-y-3 px-5 py-6 sm:px-8 sm:py-8">
             {messengerOnIos ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-medium">Apple Kalendář otevřete mimo Messenger</p>
+                <p className="font-medium">Apple Kalendář otevřete v Safari</p>
                 <p className="mt-1.5 leading-6 text-amber-900/80">
-                  Klepněte vpravo nahoře na ••• a zvolte Otevřít v prohlížeči. V Safari
-                  potom použijte tlačítko Přidat do kalendáře.
+                  Pro vložení události do Apple Kalendáře zkopírujte odkaz a vložte ho do
+                  Safari. Případně klepněte vpravo nahoře na ••• a zvolte Otevřít v
+                  externím prohlížeči.
                 </p>
                 <Button
                   type="button"
@@ -362,7 +376,7 @@ function EventView({ event }: { event: EventData }) {
                   onClick={copyInvitationLink}
                 >
                   <Copy aria-hidden="true" />
-                  Zkopírovat odkaz pro Safari
+                  Zkopírovat odkaz
                 </Button>
                 {copyNotice && <output className="mt-2 block text-xs">{copyNotice}</output>}
               </div>
@@ -398,20 +412,11 @@ function EventView({ event }: { event: EventData }) {
               </Button>
             </div>
             <p className="pt-1 text-center text-xs leading-5 text-stone-500">
-              Apple, Android, počítač i další kalendáře podporují soubor .ics. Konečné
-              potvrzení zajišťuje vaše kalendářová aplikace.
+              Pro Apple Kalendář a další aplikace použijte soubor .ics. Uložení dokončíte
+              ve své kalendářové aplikaci.
             </p>
           </div>
         </article>
-
-        <button
-          type="button"
-          onClick={createOwnEvent}
-          className="mx-auto mt-7 flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-900"
-        >
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Vytvořit vlastní událost
-        </button>
       </div>
     </main>
   );
@@ -471,6 +476,23 @@ export default function Home() {
 
   function updateField(field: keyof FormData, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
+    setGenerated(null);
+    setError('');
+    setNotice('');
+  }
+
+  function updateDateTimePart(field: 'start' | 'end', part: 'date' | 'time', value: string) {
+    setForm((current) => {
+      const date = part === 'date' ? value : datePart(current[field]);
+      const time = part === 'time' ? value : timePart(current[field]);
+      const nextValue = `${date}T${time}`;
+      const next = { ...current, [field]: nextValue };
+
+      if (field === 'start' && !current.end && date && time) {
+        next.end = addMinutesToLocalDateTime(nextValue, 60);
+      }
+      return next;
+    });
     setGenerated(null);
     setError('');
     setNotice('');
@@ -577,37 +599,63 @@ export default function Home() {
               />
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="start" className="field-label">
-                  Začátek
-                </label>
-                <Input
-                  id="start"
-                  name="start"
-                  type="datetime-local"
-                  required
-                  value={form.start}
-                  onChange={(event) => updateField('start', event.target.value)}
-                  className={fieldClass}
-                />
+            <fieldset>
+              <legend className="field-label">Datum a čas</legend>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3.5">
+                  <p className="text-sm font-medium text-stone-800">Začátek</p>
+                  <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
+                    <Input
+                      aria-label="Datum začátku"
+                      name="start-date"
+                      type="date"
+                      required
+                      value={datePart(form.start)}
+                      onChange={(event) => updateDateTimePart('start', 'date', event.target.value)}
+                      className="h-11 rounded-xl border-stone-200 bg-white px-3 shadow-none"
+                    />
+                    <Input
+                      aria-label="Čas začátku"
+                      name="start-time"
+                      type="time"
+                      step={300}
+                      required
+                      value={timePart(form.start)}
+                      onChange={(event) => updateDateTimePart('start', 'time', event.target.value)}
+                      className="h-11 rounded-xl border-stone-200 bg-white px-3 shadow-none"
+                    />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3.5">
+                  <p className="text-sm font-medium text-stone-800">Konec</p>
+                  <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
+                    <Input
+                      aria-label="Datum konce"
+                      name="end-date"
+                      type="date"
+                      min={datePart(form.start) || undefined}
+                      required
+                      value={datePart(form.end)}
+                      onChange={(event) => updateDateTimePart('end', 'date', event.target.value)}
+                      className="h-11 rounded-xl border-stone-200 bg-white px-3 shadow-none"
+                    />
+                    <Input
+                      aria-label="Čas konce"
+                      name="end-time"
+                      type="time"
+                      step={300}
+                      required
+                      value={timePart(form.end)}
+                      onChange={(event) => updateDateTimePart('end', 'time', event.target.value)}
+                      className="h-11 rounded-xl border-stone-200 bg-white px-3 shadow-none"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label htmlFor="end" className="field-label">
-                  Konec
-                </label>
-                <Input
-                  id="end"
-                  name="end"
-                  type="datetime-local"
-                  required
-                  value={form.end}
-                  onChange={(event) => updateField('end', event.target.value)}
-                  className={fieldClass}
-                />
-              </div>
-            </div>
-            <p className="-mt-3 text-xs text-stone-400">Časové pásmo: Praha</p>
+              <p className="mt-2 text-xs text-stone-400">
+                Časové pásmo Praha · konec předvyplníme hodinu po začátku.
+              </p>
+            </fieldset>
 
             <div>
               <label htmlFor="location" className="field-label">
@@ -687,9 +735,9 @@ export default function Home() {
                 className="mt-0.5 size-4 accent-[#38634f]"
               />
               <label htmlFor="shorten-link" className="cursor-pointer">
-                <strong className="font-medium text-stone-800">Vytvořit krátký odkaz zdarma</strong>
+                <strong className="font-medium text-stone-800">Zkrátit odkaz pro sdílení</strong>
                 <span className="mt-0.5 block text-xs leading-5 text-stone-500">
-                  Použije se veřejná služba spoo.me. Původní odkaz bude vždy k dispozici.
+                  Krátký odkaz vytvoří služba spoo.me. Původní zůstane k dispozici.
                 </span>
               </label>
             </div>
@@ -712,11 +760,8 @@ export default function Home() {
                 ) : (
                   <Link2 aria-hidden="true" />
                 )}
-                {shortening ? 'Zkracuji odkaz…' : 'Vygenerovat odkaz'}
+                {shortening ? 'Zkracuji odkaz…' : 'Vytvořit odkaz'}
               </Button>
-              <p className="mt-3 text-center text-xs leading-5 text-stone-500">
-                Bez registrace a bez poplatků. Při zkrácení se odkaz uloží u služby spoo.me.
-              </p>
             </div>
           </form>
 
@@ -724,7 +769,7 @@ export default function Home() {
             <div className="mt-7 border-t border-stone-100 pt-7">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-stone-800">
                 <Check aria-hidden="true" className="size-4 text-[#38634f]" />
-                Odkaz na událost je připravený
+                Odkaz je připravený ke sdílení
               </div>
               <div className="flex gap-2">
                 <Input
