@@ -6,8 +6,15 @@
   "workers_dev": true,
   "preview_urls": false,
   "vars": {
-    "SITE_URL": "https://ondreju11.github.io/Psyna_kalendar/"
+    "SITE_URL": "https://ondreju11.github.io/Psyna_kalendar/",
+    "PUBLIC_URL": "https://kalendar.psynaffuk.cz"
   },
+  "routes": [
+    {
+      "pattern": "kalendar.psynaffuk.cz",
+      "custom_domain": true
+    }
+  ],
   "d1_databases": [
     {
       "binding": "EVENTS",

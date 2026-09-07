@@ -20,6 +20,15 @@ const worker = {
       return redirectToEvent(env, publicMatch[1]);
     }
 
+    const canonicalPublicMatch = /^\/([A-Za-z0-9]{7})\/?$/u.exec(url.pathname);
+    if (request.method === 'GET' && canonicalPublicMatch) {
+      return redirectToEvent(env, canonicalPublicMatch[1]);
+    }
+
+    if (request.method === 'GET' && url.pathname === '/') {
+      return redirect(env.SITE_URL);
+    }
+
     const apiMatch = /^\/api\/events\/([A-Za-z0-9]{7})$/u.exec(url.pathname);
     if (request.method === 'GET' && apiMatch) {
       return getEvent(request, env, apiMatch[1]);
@@ -47,7 +56,7 @@ async function redirectToEvent(env, id) {
 
   if (!row) {
     destination.hash = 'invalid';
-    return Response.redirect(destination.toString(), 302);
+    return redirect(destination.toString());
   }
 
   try {
@@ -55,10 +64,10 @@ async function redirectToEvent(env, id) {
     if (!event) throw new Error('Invalid stored event');
     destination.searchParams.set('source', id);
     destination.hash = `e=${encodeBase64Url(JSON.stringify(event))}`;
-    return Response.redirect(destination.toString(), 302);
+    return redirect(destination.toString());
   } catch {
     destination.hash = 'invalid';
-    return Response.redirect(destination.toString(), 302);
+    return redirect(destination.toString());
   }
 }
 
@@ -122,7 +131,7 @@ async function createEvent(request, env) {
       return json(request, {
         id,
         editKey,
-        publicUrl: `${new URL(request.url).origin}/e/${id}`,
+        publicUrl: publicEventUrl(env, id),
       });
     } catch (error) {
       if (!String(error).toLowerCase().includes('unique')) throw error;
@@ -158,8 +167,24 @@ async function updateEvent(request, env, id) {
 
   return json(request, {
     id,
-    publicUrl: `${new URL(request.url).origin}/e/${id}`,
+    publicUrl: publicEventUrl(env, id),
     updated: true,
+  });
+}
+
+function publicEventUrl(env, id) {
+  return `${env.PUBLIC_URL.replace(/\/$/u, '')}/${id}`;
+}
+
+function redirect(destination) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: destination,
+      'Cache-Control': 'no-store, private',
+      'Referrer-Policy': 'no-referrer',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
 }
 

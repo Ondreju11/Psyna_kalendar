@@ -46,6 +46,10 @@ obsahuje tajný klíč ve fragmentu URL; je potřeba ho uložit a neposílat
 návštěvníkům. Nové události mají ochranný denní limit 250 vytvoření, aby veřejný
 formulář nemohl snadno vyčerpat bezplatnou kvótu D1.
 
+Nové veřejné odkazy mají tvar `https://kalendar.psynaffuk.cz/ABC1234`. Původní
+odkazy na `workers.dev/e/ABC1234` zůstávají funkční. Tvůrčí rozhraní nadále běží
+na GitHub Pages; vlastní subdoména patří Workeru a slouží pro veřejné odkazy a API.
+
 ## GitHub Pages
 
 Workflow `.github/workflows/deploy-pages.yml` sestaví a zveřejní web po každém

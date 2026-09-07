@@ -30,6 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 const TIME_ZONE = 'Europe/Prague';
 const EVENTS_API = 'https://kalendar-akci.kt-mcp-9992a27c899e8bf9.workers.dev';
+const PUBLIC_EVENT_BASE =
+  process.env.NEXT_PUBLIC_PUBLIC_EVENT_BASE ?? 'https://kalendar.psynaffuk.cz';
 const ALLOWED_REMINDERS = new Set([15, 30, 60, 120, 1440, 2880, 10080]);
 
 type EventData = {
@@ -345,7 +347,7 @@ function EventView({ event }: { event: EventData }) {
       const sourceId = new URL(window.location.href).searchParams.get('source');
       const invitationUrl =
         sourceId && /^[A-Za-z0-9]{7}$/u.test(sourceId)
-          ? `${EVENTS_API}/e/${sourceId}`
+          ? `${PUBLIC_EVENT_BASE}/${sourceId}`
           : window.location.href;
       await navigator.clipboard.writeText(invitationUrl);
       setCopyNotice('Odkaz je zkopírovaný. Teď ho vložte do Safari.');
@@ -537,7 +539,7 @@ export default function Home() {
           });
           setManagedEvent({ id: manageId, editKey: manageMatch[1] });
           setGenerated({
-            value: `${EVENTS_API}/e/${manageId}`,
+            value: `${PUBLIC_EVENT_BASE}/${manageId}`,
             manageUrl: window.location.href,
           });
           setNotice('Událost je otevřená pro úpravy. Veřejný odkaz zůstane stejný.');
