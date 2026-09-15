@@ -43,7 +43,7 @@ npm run worker:deploy
 
 Veřejný odkaz obsahuje pouze sedmimístné ID události. Správcovský odkaz navíc
 obsahuje tajný klíč ve fragmentu URL; je potřeba ho uložit a neposílat
-návštěvníkům. Nové události mají ochranný denní limit 250 vytvoření, aby veřejný
+návštěvníkům. Nové události mají ochranný denní limit 20 vytvoření, aby veřejný
 formulář nemohl snadno vyčerpat bezplatnou kvótu D1.
 
 Nové veřejné odkazy mají tvar `https://kalendar.psynaffuk.cz/ABC1234`. Původní

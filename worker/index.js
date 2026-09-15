@@ -5,11 +5,21 @@ const ALLOWED_ORIGINS = new Set([
   'http://127.0.0.1:3000',
 ]);
 const ID_PATTERN = /^[A-Za-z0-9]{7}$/u;
-const CREATE_LIMIT_PER_DAY = 250;
+const CREATE_LIMIT_PER_DAY = 20;
+const MAX_JSON_BYTES = 16 * 1024;
+const SECURITY_HEADERS = {
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Content-Type-Options': 'nosniff',
+};
 
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.protocol !== 'https:') {
+      url.protocol = 'https:';
+      return redirect(url.toString(), 308);
+    }
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(request) });
@@ -101,9 +111,10 @@ async function createEvent(request, env) {
   const limit = await env.EVENTS.prepare(
     `INSERT INTO daily_creates (day, count) VALUES (?, 1)
      ON CONFLICT(day) DO UPDATE SET count = count + 1
+     WHERE daily_creates.count < ?
      RETURNING count`,
   )
-    .bind(day)
+    .bind(day, CREATE_LIMIT_PER_DAY)
     .first();
 
   if (!limit || Number(limit.count) > CREATE_LIMIT_PER_DAY) {
@@ -176,14 +187,14 @@ function publicEventUrl(env, id) {
   return `${env.PUBLIC_URL.replace(/\/$/u, '')}/${id}`;
 }
 
-function redirect(destination) {
+function redirect(destination, status = 302) {
   return new Response(null, {
-    status: 302,
+    status,
     headers: {
       Location: destination,
       'Cache-Control': 'no-store, private',
       'Referrer-Policy': 'no-referrer',
-      'X-Content-Type-Options': 'nosniff',
+      ...SECURITY_HEADERS,
     },
   });
 }
@@ -239,8 +250,34 @@ function isSafeHttpUrl(value) {
 
 async function readJson(request) {
   if (!request.headers.get('content-type')?.includes('application/json')) return null;
+
+  const declaredLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BYTES) return null;
+  if (!request.body) return null;
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let totalLength = 0;
+
   try {
-    return await request.json();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalLength += value.byteLength;
+      if (totalLength > MAX_JSON_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+
+    const bytes = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(bytes));
   } catch {
     return null;
   }
@@ -286,6 +323,7 @@ function corsHeaders(request) {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     Vary: 'Origin',
+    ...SECURITY_HEADERS,
   };
   if (origin && ALLOWED_ORIGINS.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
   return headers;
@@ -298,7 +336,6 @@ function json(request, body, status = 200, extraHeaders = {}) {
       ...corsHeaders(request),
       ...extraHeaders,
       'Content-Type': 'application/json; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff',
     },
   });
 }
