@@ -13,7 +13,7 @@ Outlooku a dalších aplikací podporujících formát `.ics`.
 - upozornění v `.ics` souboru,
 - časové pásmo `Europe/Prague`,
 - responzivní české rozhraní,
-- automatické nasazení na GitHub Pages.
+- automatické nasazení na GitHub Pages pod `akce.psynaffuk.cz`.
 
 ## Lokální spuštění
 
@@ -47,8 +47,9 @@ návštěvníkům. Nové události mají ochranný denní limit 20 vytvoření, 
 formulář nemohl snadno vyčerpat bezplatnou kvótu D1.
 
 Nové veřejné odkazy mají tvar `https://kalendar.psynaffuk.cz/ABC1234`. Původní
-odkazy na `workers.dev/e/ABC1234` zůstávají funkční. Tvůrčí rozhraní nadále běží
-na GitHub Pages; vlastní subdoména patří Workeru a slouží pro veřejné odkazy a API.
+odkazy na `workers.dev/e/ABC1234` zůstávají funkční. Tvůrčí rozhraní běží na
+GitHub Pages pod `https://akce.psynaffuk.cz/`; subdoména `kalendar.psynaffuk.cz`
+patří Workeru a slouží pro veřejné odkazy a API.
 
 ## GitHub Pages
 

@@ -1,6 +1,7 @@
 const ALLOWED_REMINDERS = new Set([15, 30, 60, 120, 1440, 2880, 10080]);
 const ALLOWED_ORIGINS = new Set([
   'https://ondreju11.github.io',
+  'https://akce.psynaffuk.cz',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
 ]);

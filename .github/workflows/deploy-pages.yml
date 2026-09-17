@@ -33,13 +33,8 @@ jobs:
       - name: Configure public path
         shell: bash
         run: |
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"
-          if [[ "$REPO_NAME" == "${GITHUB_REPOSITORY_OWNER}.github.io" ]]; then
-            echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
-          else
-            echo "NEXT_PUBLIC_BASE_PATH=/$REPO_NAME" >> "$GITHUB_ENV"
-          fi
-          echo "NEXT_PUBLIC_SITE_URL=https://${GITHUB_REPOSITORY_OWNER}.github.io" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SITE_URL=https://akce.psynaffuk.cz" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_PUBLIC_EVENT_BASE=https://kalendar.psynaffuk.cz" >> "$GITHUB_ENV"
 
       - name: Install dependencies

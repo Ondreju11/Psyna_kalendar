@@ -6,7 +6,7 @@
   "workers_dev": true,
   "preview_urls": false,
   "vars": {
-    "SITE_URL": "https://ondreju11.github.io/Psyna_kalendar/",
+    "SITE_URL": "https://akce.psynaffuk.cz/",
     "PUBLIC_URL": "https://kalendar.psynaffuk.cz"
   },
   "routes": [
