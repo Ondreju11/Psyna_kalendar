@@ -29,9 +29,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 const TIME_ZONE = 'Europe/Prague';
-const EVENTS_API = 'https://kalendar-akci.kt-mcp-9992a27c899e8bf9.workers.dev';
 const PUBLIC_EVENT_BASE =
   process.env.NEXT_PUBLIC_PUBLIC_EVENT_BASE ?? 'https://kalendar.psynaffuk.cz';
+const EVENTS_API = PUBLIC_EVENT_BASE;
 const ALLOWED_REMINDERS = new Set([15, 30, 60, 120, 1440, 2880, 10080]);
 
 type EventData = {
@@ -665,9 +665,19 @@ export default function Home() {
           : 'Krátký odkaz je připravený. Správcovský odkaz si bezpečně uložte.',
       );
     } catch (submitError) {
-      setGenerated({ value: `${baseUrl}#c=${encodeEvent(eventData)}`, fallback: true });
-      setNotice('Cloudflare teď neodpověděl. Vytvořil jsem funkční záložní odkaz.');
-      setError(submitError instanceof Error ? submitError.message : 'Krátký odkaz selhal.');
+      const message =
+        submitError instanceof TypeError
+          ? 'Spojení se službou se nepodařilo. Zkuste to znovu.'
+          : submitError instanceof Error
+            ? submitError.message
+            : 'Krátký odkaz se nepodařilo vytvořit.';
+      setError(message);
+      if (managedEvent) {
+        setNotice('Původní událost zůstala beze změny. Zkuste uložení znovu.');
+      } else {
+        setGenerated({ value: `${baseUrl}#c=${encodeEvent(eventData)}`, fallback: true });
+        setNotice('Krátký odkaz se nepodařilo vytvořit. Záložní odkaz funguje, ale nejde upravovat.');
+      }
     } finally {
       setSubmitting(false);
     }
