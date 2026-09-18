@@ -9,10 +9,12 @@ const socialImage = new URL(`${basePath}/og.png`, siteUrl).toString();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'Kalendář akcí',
-  description: 'Vytvořte sdílený odkaz pro přidání akce do kalendáře.',
+  description:
+    'Sdílejte jednu akci nebo přehled více akcí a přidejte je do kalendáře.',
   openGraph: {
     title: 'Kalendář akcí',
-    description: 'Vytvořte sdílený odkaz pro přidání akce do kalendáře.',
+    description:
+      'Sdílejte jednu akci nebo přehled více akcí a přidejte je do kalendáře.',
     type: 'website',
     locale: 'cs_CZ',
     images: [
@@ -27,7 +29,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Kalendář akcí',
-    description: 'Vytvořte sdílený odkaz pro přidání akce do kalendáře.',
+    description:
+      'Sdílejte jednu akci nebo přehled více akcí a přidejte je do kalendáře.',
     images: [socialImage],
   },
 };
