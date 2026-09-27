@@ -121,11 +121,15 @@ function subscribeToUserAgent() {
   return () => {};
 }
 
-function isMessengerOnIos() {
+// Vestavěné prohlížeče aplikací na iOS neumí otevřít soubor .ics.
+function isInAppBrowserOnIos() {
   const userAgent = navigator.userAgent;
   const isIos = /iPad|iPhone|iPod/iu.test(userAgent);
-  const isMessenger = /FBAN|FBAV|FB_IAB|MessengerForiOS/iu.test(userAgent);
-  return isIos && isMessenger;
+  const isInAppBrowser =
+    /FBAN|FBAV|FB_IAB|MessengerForiOS|Instagram|GSA\/|LinkedInApp|Snapchat|musical_ly|BytedanceWebview|Line\//iu.test(
+      userAgent,
+    );
+  return isIos && isInAppBrowser;
 }
 
 function encodeEvent(event: EventData) {
@@ -498,9 +502,9 @@ function EventView({
     () => calendarIcsUrl(event, sourceId),
     [event, sourceId],
   );
-  const messengerOnIos = useSyncExternalStore(
+  const inAppBrowserOnIos = useSyncExternalStore(
     subscribeToUserAgent,
-    isMessengerOnIos,
+    isInAppBrowserOnIos,
     () => false,
   );
   const [copyNotice, setCopyNotice] = useState('');
@@ -593,41 +597,6 @@ function EventView({
           )}
 
           <div className="space-y-3 px-5 py-6 sm:px-8 sm:py-8">
-            {messengerOnIos ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-medium">Apple Kalendář otevřete v Safari</p>
-                <p className="mt-1.5 leading-6 text-amber-900/80">
-                  Pro vložení události do Apple Kalendáře zkopírujte odkaz a
-                  vložte ho do Safari. Případně klepněte vpravo nahoře na ••• a
-                  zvolte Otevřít v externím prohlížeči.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-3 h-10 rounded-xl border-amber-300 bg-white px-3 text-amber-950 hover:bg-amber-100"
-                  onClick={copyInvitationLink}
-                >
-                  <Copy aria-hidden="true" />
-                  Zkopírovat odkaz
-                </Button>
-                {copyNotice && (
-                  <output className="mt-2 block text-xs">{copyNotice}</output>
-                )}
-              </div>
-            ) : icsUrl ? (
-              <a
-                href={icsUrl}
-                className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[#38634f] px-2.5 text-base font-medium whitespace-nowrap text-white transition-all hover:bg-[#2f5543] active:translate-y-px"
-              >
-                <CalendarDays aria-hidden="true" />
-                Apple Kalendář
-              </a>
-            ) : (
-              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                Tato záložní pozvánka neumí přenést opakování nebo více
-                upozornění. Požádejte pořadatele o krátký odkaz na událost.
-              </p>
-            )}
             {!event.repeat && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button
@@ -656,10 +625,47 @@ function EventView({
                 </Button>
               </div>
             )}
+            {inAppBrowserOnIos ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+                <p className="font-medium">
+                  Apple a další kalendáře otevřete v Safari
+                </p>
+                <p className="mt-1.5 leading-6 text-amber-900/80">
+                  Tento prohlížeč v aplikaci neumí událost uložit. Zkopírujte
+                  odkaz a vložte ho do Safari. Případně klepněte na ••• nebo
+                  ikonu kompasu a zvolte otevření v Safari.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 h-10 rounded-xl border-amber-300 bg-white px-3 text-amber-950 hover:bg-amber-100"
+                  onClick={copyInvitationLink}
+                >
+                  <Copy aria-hidden="true" />
+                  Zkopírovat odkaz
+                </Button>
+                {copyNotice && (
+                  <output className="mt-2 block text-xs">{copyNotice}</output>
+                )}
+              </div>
+            ) : icsUrl ? (
+              <a
+                href={icsUrl}
+                className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-background px-2.5 text-sm font-medium whitespace-nowrap text-foreground transition-all hover:bg-muted active:translate-y-px"
+              >
+                <CalendarDays aria-hidden="true" className="size-4" />
+                Apple a další kalendáře
+              </a>
+            ) : (
+              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                Tato záložní pozvánka neumí přenést opakování nebo více
+                upozornění. Požádejte pořadatele o krátký odkaz na událost.
+              </p>
+            )}
             <p className="pt-1 text-center text-xs leading-5 text-stone-500">
               {event.repeat
-                ? 'Opakování a více upozornění jsou v souboru .ics. Kalendářové aplikace je mohou zpracovat různě; po přidání si je zkontrolujte.'
-                : 'Apple Kalendář používá soubor .ics, který otevřou i další kalendářové aplikace. Přímé odkazy Google a Outlook nepřenášejí upozornění; nastavte je při uložení.'}
+                ? 'Opakování a více upozornění jsou v souboru .ics. Kalendářové aplikace je mohou zpracovat různě; po přidání si je zkontrolujte. Na iPhonu stránku otevřete v Safari.'
+                : 'Apple a další kalendáře používají soubor .ics; na iPhonu stránku otevřete v Safari. Přímé odkazy Google a Outlook nepřenášejí upozornění; nastavte je při uložení.'}
             </p>
           </div>
         </article>
@@ -704,9 +710,9 @@ function CollectionView({ collection }: { collection: SharedCollection }) {
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
     collection.events.map(({ id }) => id),
   );
-  const messengerOnIos = useSyncExternalStore(
+  const inAppBrowserOnIos = useSyncExternalStore(
     subscribeToUserAgent,
-    isMessengerOnIos,
+    isInAppBrowserOnIos,
     () => false,
   );
   const [copyNotice, setCopyNotice] = useState('');
@@ -790,14 +796,14 @@ function CollectionView({ collection }: { collection: SharedCollection }) {
             ))}
           </div>
           <div className="mt-6 border-t border-stone-100 pt-6">
-            {messengerOnIos ? (
+            {inAppBrowserOnIos ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
                 <p className="font-medium">
                   Pro Apple Kalendář otevřete pozvánku v Safari
                 </p>
                 <p className="mt-1 leading-6">
-                  Zkopírujte odkaz a vložte ho do Safari, nebo v Messengeru
-                  klepněte na ••• a zvolte Otevřít v externím prohlížeči.
+                  Zkopírujte odkaz a vložte ho do Safari, nebo v aplikaci
+                  klepněte na ••• a zvolte otevření v Safari.
                 </p>
                 <Button
                   type="button"
