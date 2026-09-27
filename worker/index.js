@@ -957,7 +957,8 @@ function formatIcsTrigger(minutes) {
 }
 
 function formatIcsLocal(value) {
-  return value.replaceAll('-', '').replace(':', '');
+  // iCalendar DATE-TIME vyžaduje sekundy (YYYYMMDDTHHMMSS), jinak ho iOS odmítne.
+  return `${value.replaceAll('-', '').replaceAll(':', '').slice(0, 13)}00`;
 }
 
 function formatIcsUtc(date) {
