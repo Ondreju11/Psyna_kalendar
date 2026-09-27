@@ -1,0 +1,483 @@
+:root {
+  --bg: #09090b;
+  --bg-soft: rgba(18, 18, 22, 0.78);
+  --panel: rgba(15, 15, 18, 0.84);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --text: #f5eee6;
+  --muted: rgba(245, 238, 230, 0.72);
+  --accent: #bc2d2f;
+  --accent-soft: rgba(188, 45, 47, 0.18);
+  --accent-strong: #f15b5d;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --transition: 180ms ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Manrope", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(188, 45, 47, 0.3), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(102, 22, 22, 0.35), transparent 26%),
+    linear-gradient(180deg, #070708 0%, #111114 48%, #09090b 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle, transparent 0 29%, rgba(255, 255, 255, 0.04) 29.6% 30%, transparent 30.6%),
+    conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.06) 0deg 2deg,
+      transparent 2deg 28deg,
+      rgba(255, 255, 255, 0.06) 28deg 30deg,
+      transparent 30deg 58deg,
+      rgba(255, 255, 255, 0.06) 58deg 60deg,
+      transparent 60deg 88deg,
+      rgba(255, 255, 255, 0.06) 88deg 90deg,
+      transparent 90deg 118deg,
+      rgba(255, 255, 255, 0.06) 118deg 120deg,
+      transparent 120deg 148deg,
+      rgba(255, 255, 255, 0.06) 148deg 150deg,
+      transparent 150deg 178deg,
+      rgba(255, 255, 255, 0.06) 178deg 180deg,
+      transparent 180deg 208deg,
+      rgba(255, 255, 255, 0.06) 208deg 210deg,
+      transparent 210deg 238deg,
+      rgba(255, 255, 255, 0.06) 238deg 240deg,
+      transparent 240deg 268deg,
+      rgba(255, 255, 255, 0.06) 268deg 270deg,
+      transparent 270deg 298deg,
+      rgba(255, 255, 255, 0.06) 298deg 300deg,
+      transparent 300deg 328deg,
+      rgba(255, 255, 255, 0.06) 328deg 330deg,
+      transparent 330deg 358deg,
+      rgba(255, 255, 255, 0.06) 358deg 360deg
+    );
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: min(80vw, 900px) min(80vw, 900px);
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+.page-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.layout {
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 0;
+  align-items: stretch;
+  border: 1px solid var(--panel-border);
+  border-radius: 34px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%), var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+  animation: rise 700ms ease both;
+}
+
+.layout--single {
+  width: min(860px, 100%);
+  grid-template-columns: 1fr;
+}
+
+.hero-card,
+.signup-card {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+.hero-card {
+  padding: 48px;
+}
+
+.soldout-card {
+  min-height: min(78vh, 760px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.soldout-lede,
+.soldout-copy {
+  max-width: 38rem;
+}
+
+.hero-card::after,
+.signup-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -18% -34% auto;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(241, 91, 93, 0.24), transparent 68%);
+  pointer-events: none;
+}
+
+.signup-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(188, 45, 47, 0.05));
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  max-width: 8ch;
+  font-size: clamp(4rem, 9vw, 7.1rem);
+}
+
+h2 {
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
+}
+
+.lede,
+.signup-intro p,
+.story-block p,
+.contact-copy,
+.form-note,
+.form-status {
+  color: var(--muted);
+}
+
+.lede {
+  max-width: 34rem;
+  margin: 20px 0 0;
+  font-size: 1.06rem;
+  line-height: 1.75;
+}
+
+.event-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 34px 0;
+}
+
+.meta-chip {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.meta-chip strong {
+  font-size: 1.05rem;
+}
+
+.meta-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.story-block {
+  display: grid;
+  gap: 12px;
+  max-width: 42rem;
+  line-height: 1.7;
+}
+
+.story-block p,
+.signup-intro p,
+.contact-copy,
+.form-note,
+.form-status {
+  margin: 0;
+}
+
+.contact-card {
+  margin-top: clamp(44px, 10vh, 92px);
+  padding: 0;
+  background: none;
+  border: 0;
+  max-width: 18rem;
+  opacity: 0.74;
+}
+
+.contact-title {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contact-copy {
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  transition:
+    color var(--transition),
+    border-color var(--transition),
+    transform var(--transition);
+}
+
+.contact-link:hover,
+.contact-link:focus-visible {
+  color: var(--accent-strong);
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.signup-intro {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.capacity-highlight {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+
+.capacity-highlight__label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(245, 238, 230, 0.58);
+}
+
+.capacity-highlight strong {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(3rem, 7vw, 4.75rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--accent-strong);
+  text-shadow: 0 10px 28px rgba(188, 45, 47, 0.28);
+}
+
+.capacity-highlight span:last-child {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #ffb2b4;
+}
+
+.signup-form {
+  display: grid;
+  gap: 18px;
+}
+
+.form-field {
+  display: grid;
+  gap: 10px;
+}
+
+.form-field label {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.form-field input {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  padding: 0 18px;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.form-field input::placeholder {
+  color: rgba(245, 238, 230, 0.42);
+}
+
+.form-field input:focus {
+  outline: none;
+  transform: translateY(-1px);
+  border-color: rgba(241, 91, 93, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 4px rgba(188, 45, 47, 0.14);
+}
+
+.form-field--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+button {
+  min-height: 58px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #d64043, #8d1519);
+  color: #fff8f2;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform var(--transition),
+    filter var(--transition),
+    box-shadow var(--transition);
+  box-shadow: 0 16px 34px rgba(141, 21, 25, 0.35);
+}
+
+button:hover,
+button:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+button:disabled {
+  cursor: progress;
+  transform: none;
+  opacity: 0.72;
+}
+
+.form-note {
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.form-status {
+  min-height: 1.5em;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.form-status[data-state="error"] {
+  color: #ffb2b4;
+}
+
+.form-status[data-state="success"] {
+  color: #dbeec0;
+}
+
+.noscript-banner {
+  position: fixed;
+  inset: auto 16px 16px;
+  z-index: 5;
+  max-width: 420px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #2b0f12;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.94rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+    border-radius: 28px;
+  }
+
+  .hero-card,
+  .signup-card {
+    padding: 32px;
+  }
+
+  .signup-card {
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .event-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    padding: 18px;
+  }
+
+  .hero-card,
+  .signup-card {
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: clamp(3.2rem, 18vw, 4.8rem);
+  }
+
+  h2 {
+    font-size: clamp(2.5rem, 12vw, 3.4rem);
+  }
+
+  .capacity-highlight strong {
+    font-size: clamp(2.6rem, 14vw, 3.8rem);
+  }
+
+  .lede,
+  .story-block {
+    font-size: 0.98rem;
+  }
+}

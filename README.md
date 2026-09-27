@@ -74,6 +74,18 @@ patří Workeru a slouží pro veřejné odkazy a API.
 
 ## GitHub Pages
 
+### Krvavá hodina
+
+Registrační stránka běží na `https://akce.psynaffuk.cz/krvava/`.
+Statické soubory jsou v `public/krvava/` a exportují se společně s kalendářem.
+Termín je 20. 10. 2026 v 18:15, kapacita 15 osob. Registrace používají
+samostatný Supabase projekt a identifikátor `krvava-hodina-2026-10-20`;
+backend kalendáře v D1 se nemění. SQL pro nastavení databáze je v repozitáři
+`Ondreju11/Krvava` v souboru `supabase.sql`. Při změnách registrační stránky
+udržuj soubory v `public/krvava/` a původním repozitáři shodné.
+
+### Nasazení
+
 Workflow `.github/workflows/deploy-pages.yml` sestaví a zveřejní web po každém
 pushi do větve `main`. V nastavení repozitáře je potřeba jednou vybrat
 **Settings → Pages → Source → GitHub Actions**.

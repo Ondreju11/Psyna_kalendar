@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Krvavá hodina | Kapacita naplněna</title>
+    <meta
+      name="description"
+      content="Kapacita registrací na deskovkový večer Krvavá hodina je aktuálně naplněná."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="full">
+    <div class="page-shell">
+      <main class="layout layout--single">
+        <section class="hero-card soldout-card">
+          <p class="eyebrow">Registrace uzavřena</p>
+          <h1>Kapacita je plná</h1>
+          <p class="lede soldout-lede">
+            Na Krvavou hodinu už je přihlášeno 15 lidí a další registrace jsou
+            teď uzavřené.
+          </p>
+
+          <div class="event-meta" aria-label="Stav akce">
+            <article class="meta-chip">
+              <span class="meta-label">Kdy</span>
+              <strong>20. 10. 2026</strong>
+              <span>od 18:15</span>
+            </article>
+            <article class="meta-chip">
+              <span class="meta-label">Stav</span>
+              <strong id="capacity-count">15/15</strong>
+              <span id="capacity-copy">kapacita se právě kontroluje</span>
+            </article>
+          </div>
+
+          <div class="story-block soldout-copy">
+            <p>
+              Pokud se nějaké místo uvolní, dáme vědět. Nejlépe napiš na fb jako
+              náhradník. Ozveme se určitě před startem.
+            </p>
+          </div>
+
+          <aside class="contact-card">
+            <p class="contact-title">Kontakt na pořadatele</p>
+            <p class="contact-copy">
+              Když budeš chtít zkusit štěstí jako náhradník, napiš mi.
+            </p>
+            <a
+              class="contact-link"
+              id="contact-link"
+              href="https://www.facebook.com/ondra.d.ulrich/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              https://www.facebook.com/ondra.d.ulrich/
+            </a>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

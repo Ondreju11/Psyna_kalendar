@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Krvavá hodina | Přihlášení</title>
+    <meta
+      name="description"
+      content="Přihlášení na deskovkový večer Krvavá hodina. Zapiš své jméno a e-mail a doraz včas."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="signup">
+    <div class="page-shell">
+      <main class="layout">
+        <section class="hero-card">
+          <p class="eyebrow">Deskovkový večer týmu Psyna</p>
+          <h1>Krvavá hodina</h1>
+          <p class="lede">
+            Připrav si deduktivní schopnosti a poker face. Ve vesnici se ukrývá
+            démon a vaším úkolem je ho najít dřív, než všechny povraždí.
+          </p>
+
+          <div class="event-meta" aria-label="Základní informace o akci">
+            <article class="meta-chip">
+              <span class="meta-label">Kdy</span>
+              <strong>20. 10. 2026</strong>
+              <span>od 18:15</span>
+            </article>
+            <article class="meta-chip">
+              <span class="meta-label">Důležité</span>
+              <strong>Doraz včas</strong>
+              <span>po startu už se nelze připojit</span>
+            </article>
+            <article class="meta-chip">
+              <span class="meta-label">Pro koho</span>
+              <strong>I pro nováčky</strong>
+              <span>pravidla vysvětlíme na místě</span>
+            </article>
+          </div>
+
+          <div class="story-block">
+            <p>
+              Blood on the Clocktower je sociální deduktivní hra ve stylu
+              Městečka Palermo nebo Vlkodlaků, jen výrazně propracovanější.
+              Každý hráč má vlastní schopnost a i po smrti zůstává ve hře.
+            </p>
+            <p>
+              Nikdo tedy neskončí jako smutný divák u zdi. Pořád můžeš mluvit,
+              dedukovat a vyhrát.
+            </p>
+          </div>
+
+          <aside class="contact-card">
+            <p class="contact-title">Kontakt na pořadatele</p>
+            <p class="contact-copy">
+              Když budeš něco potřebovat, napiš mi přes Facebook.
+            </p>
+            <a
+              class="contact-link"
+              id="contact-link"
+              href="#"
+              rel="noreferrer"
+            >
+              Doplnit Facebook URL
+            </a>
+          </aside>
+        </section>
+
+        <section class="signup-card" aria-labelledby="signup-heading">
+          <div class="signup-intro">
+            <p class="eyebrow">Registrace</p>
+            <div class="capacity-highlight" aria-live="polite">
+              <span class="capacity-highlight__label">Obsazenost</span>
+              <strong id="capacity-count">Načítám...</strong>
+              <span id="capacity-copy">ověřujeme počet přihlášených</span>
+            </div>
+            <h2 id="signup-heading">Zajisti si místo</h2>
+            <p>
+              Stačí jméno a e-mail. Registraci si uložíme a na místě už jen
+              dorazíš včas.
+            </p>
+          </div>
+
+          <form id="signup-form" class="signup-form" novalidate>
+            <div class="form-field">
+              <label for="full-name">Jméno</label>
+              <input
+                id="full-name"
+                name="fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="Třeba Jan Novák"
+                minlength="2"
+                maxlength="120"
+                required
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="email">E-mail</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="tvuj@email.cz"
+                maxlength="160"
+                required
+              />
+            </div>
+
+            <div class="form-field form-field--hidden" aria-hidden="true">
+              <label for="website">Web</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
+            <button id="submit-button" type="submit">
+              Přihlásit se na Krvavou hodinu
+            </button>
+
+            <p class="form-note">
+              Odesláním ukládáš své jméno a e-mail pro organizaci této akce.
+            </p>
+
+            <p
+              id="form-status"
+              class="form-status"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <noscript>
+      <div class="noscript-banner">
+        Pro odeslání přihlášky je potřeba zapnout JavaScript.
+      </div>
+    </noscript>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
