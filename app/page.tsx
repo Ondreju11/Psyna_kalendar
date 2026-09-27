@@ -498,9 +498,6 @@ function EventView({
     () => calendarIcsUrl(event, sourceId),
     [event, sourceId],
   );
-  const advancedEvent = Boolean(
-    event.repeat || (event.reminders?.length ?? 1) > 1,
-  );
   const messengerOnIos = useSyncExternalStore(
     subscribeToUserAgent,
     isMessengerOnIos,
@@ -622,8 +619,8 @@ function EventView({
                 href={icsUrl}
                 className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[#38634f] px-2.5 text-base font-medium whitespace-nowrap text-white transition-all hover:bg-[#2f5543] active:translate-y-px"
               >
-                <Download aria-hidden="true" />
-                Přidat do kalendáře
+                <CalendarDays aria-hidden="true" />
+                Apple Kalendář
               </a>
             ) : (
               <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -631,7 +628,7 @@ function EventView({
                 upozornění. Požádejte pořadatele o krátký odkaz na událost.
               </p>
             )}
-            {!advancedEvent && (
+            {!event.repeat && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button
                   type="button"
@@ -660,9 +657,9 @@ function EventView({
               </div>
             )}
             <p className="pt-1 text-center text-xs leading-5 text-stone-500">
-              {advancedEvent
+              {event.repeat
                 ? 'Opakování a více upozornění jsou v souboru .ics. Kalendářové aplikace je mohou zpracovat různě; po přidání si je zkontrolujte.'
-                : 'Pro Apple Kalendář a další aplikace použijte soubor .ics. Přímé odkazy Google a Outlook nepřenášejí upozornění; nastavte je při uložení.'}
+                : 'Apple Kalendář používá soubor .ics, který otevřou i další kalendářové aplikace. Přímé odkazy Google a Outlook nepřenášejí upozornění; nastavte je při uložení.'}
             </p>
           </div>
         </article>
