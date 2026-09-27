@@ -922,7 +922,8 @@ function buildEventLines(id, event) {
   if (event.description)
     lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
   if (event.location) lines.push(`LOCATION:${escapeIcsText(event.location)}`);
-  if (event.website) lines.push(`URL:${escapeIcsText(event.website)}`);
+  // URL je typu URI, ne TEXT: neescapovat. href navíc odstraní případné konce řádků.
+  if (event.website) lines.push(`URL:${new URL(event.website).href}`);
   if (event.repeat) {
     const until = repeatUntilUtc(event);
     if (until)
