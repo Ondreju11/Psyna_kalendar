@@ -6,7 +6,7 @@
     <title>Krvavá hodina | Přihlášení</title>
     <meta
       name="description"
-      content="Přihlášení na deskovkový večer Krvavá hodina. Zapiš své jméno a e-mail a doraz včas."
+      content="Přihlášení na deskovkový večer Krvavá hodina. Zapište své jméno a e-mail a dorazte včas."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,10 +20,10 @@
     <div class="page-shell">
       <main class="layout">
         <section class="hero-card">
-          <p class="eyebrow">Deskovkový večer týmu Psyna</p>
+          <p class="eyebrow">Deskovkový večer spolku Psyna</p>
           <h1>Krvavá hodina</h1>
           <p class="lede">
-            Připrav si deduktivní schopnosti a poker face. Ve vesnici se ukrývá
+            Připravte si deduktivní schopnosti a poker face. Ve vesnici se ukrývá
             démon a vaším úkolem je ho najít dřív, než všechny povraždí.
           </p>
 
@@ -34,8 +34,13 @@
               <span>od 18:15</span>
             </article>
             <article class="meta-chip">
+              <span class="meta-label">Kde</span>
+              <strong>Celetná – laboratoř</strong>
+              <span>případně vyjeďte do 3. patra, tam vás najdeme</span>
+            </article>
+            <article class="meta-chip">
               <span class="meta-label">Důležité</span>
-              <strong>Doraz včas</strong>
+              <strong>Dorazte včas</strong>
               <span>po startu už se nelze připojit</span>
             </article>
             <article class="meta-chip">
@@ -45,22 +50,38 @@
             </article>
           </div>
 
+          <a
+            class="calendar-link"
+            data-calendar-link
+            href="#"
+            target="_blank"
+            rel="noreferrer"
+            hidden
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+              <path d="M3.5 10h17M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+            </svg>
+            Přidat do kalendáře
+          </a>
+
           <div class="story-block">
             <p>
-              Blood on the Clocktower je sociální deduktivní hra ve stylu
-              Městečka Palermo nebo Vlkodlaků, jen výrazně propracovanější.
-              Každý hráč má vlastní schopnost a i po smrti zůstává ve hře.
+              Hrát budeme Blood on the Clocktower, společenskou hru na
+              odhalování podobnou Městečku Palermo nebo Vlkodlakům, jen mnohem
+              propracovanější. Každý z vás dostane vlastní roli se zvláštní
+              schopností.
             </p>
             <p>
-              Nikdo tedy neskončí jako smutný divák u zdi. Pořád můžeš mluvit,
-              dedukovat a vyhrát.
+              A hlavně: smrtí pro vás hra nekončí. I mrtví hráči dál diskutují,
+              pátrají a můžou svému týmu pomoct k vítězství.
             </p>
           </div>
 
           <aside class="contact-card">
             <p class="contact-title">Kontakt na pořadatele</p>
             <p class="contact-copy">
-              Když budeš něco potřebovat, napiš mi přes Facebook.
+              Když budete něco potřebovat, napište mi přes Facebook.
             </p>
             <a
               class="contact-link"
@@ -76,16 +97,19 @@
         <section class="signup-card" aria-labelledby="signup-heading">
           <div class="signup-intro">
             <p class="eyebrow">Registrace</p>
+            <h2 id="signup-heading">Zajistěte si místo</h2>
+            <p>
+              Vyplňte jméno a e-mail a místo máte jisté. Pak už stačí jen
+              dorazit včas.
+            </p>
             <div class="capacity-highlight" aria-live="polite">
               <span class="capacity-highlight__label">Obsazenost</span>
               <strong id="capacity-count">Načítám...</strong>
               <span id="capacity-copy">ověřujeme počet přihlášených</span>
+              <span class="capacity-bar" aria-hidden="true">
+                <span id="capacity-bar-fill"></span>
+              </span>
             </div>
-            <h2 id="signup-heading">Zajisti si místo</h2>
-            <p>
-              Stačí jméno a e-mail. Registraci si uložíme a na místě už jen
-              dorazíš včas.
-            </p>
           </div>
 
           <form id="signup-form" class="signup-form" novalidate>
@@ -110,7 +134,7 @@
                 name="email"
                 type="email"
                 autocomplete="email"
-                placeholder="tvuj@email.cz"
+                placeholder="vas@email.cz"
                 maxlength="160"
                 required
               />
@@ -132,7 +156,7 @@
             </button>
 
             <p class="form-note">
-              Odesláním ukládáš své jméno a e-mail pro organizaci této akce.
+              Odesláním ukládáte své jméno a e-mail pro organizaci této akce.
             </p>
 
             <p
@@ -141,6 +165,22 @@
               role="status"
               aria-live="polite"
             ></p>
+
+            <a
+              id="calendar-link-success"
+              class="calendar-link"
+              data-calendar-link
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                <path d="M3.5 10h17M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+              </svg>
+              Přidat si akci do kalendáře
+            </a>
           </form>
         </section>
       </main>

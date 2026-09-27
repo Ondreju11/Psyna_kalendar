@@ -6,6 +6,8 @@ const SUPABASE_PUBLISHABLE_KEY =
 const EVENT_SLUG = "krvava-hodina-2026-10-20";
 const CONTACT_URL = "https://www.facebook.com/ondra.d.ulrich/";
 const CONTACT_LABEL = "https://www.facebook.com/ondra.d.ulrich/";
+// Krátký odkaz na akci z kalendar.psynaffuk.cz; prázdný = tlačítko se nezobrazí.
+const CALENDAR_URL = "https://kalendar.psynaffuk.cz/BpQq9FP";
 const FULL_PAGE_URL = new URL("full.html", window.location.href).toString();
 const SIGNUP_PAGE_URL = new URL("index.html", window.location.href).toString();
 
@@ -23,6 +25,9 @@ const statusElement = document.querySelector("#form-status");
 const contactLink = document.querySelector("#contact-link");
 const capacityCountElement = document.querySelector("#capacity-count");
 const capacityCopyElement = document.querySelector("#capacity-copy");
+const capacityBarFillElement = document.querySelector("#capacity-bar-fill");
+const calendarLinks = document.querySelectorAll("[data-calendar-link]");
+const successCalendarLink = document.querySelector("#calendar-link-success");
 const currentPage = document.body?.dataset.page ?? "signup";
 const isFullPage = currentPage === "full";
 
@@ -35,6 +40,14 @@ if (contactLink) {
   } else {
     contactLink.addEventListener("click", (event) => event.preventDefault());
   }
+}
+
+for (const link of calendarLinks) {
+  if (CALENDAR_URL) {
+    link.href = CALENDAR_URL;
+  }
+
+  link.hidden = !CALENDAR_URL || link === successCalendarLink;
 }
 
 function setStatus(message, state = "") {
@@ -82,6 +95,11 @@ function updateCapacityStatus(data) {
   );
 
   capacityCountElement.textContent = `${registeredCount}/${registrationLimit}`;
+
+  if (capacityBarFillElement && registrationLimit > 0) {
+    const fillPercent = Math.min((registeredCount / registrationLimit) * 100, 100);
+    capacityBarFillElement.style.width = `${fillPercent}%`;
+  }
 
   if (data.is_full) {
     capacityCopyElement.textContent = "kapacita je právě naplněná";
@@ -148,12 +166,12 @@ form?.addEventListener("submit", async (event) => {
   }
 
   if (fullName.length < 2) {
-    setStatus("Zadej prosím celé jméno.", "error");
+    setStatus("Zadejte prosím celé jméno.", "error");
     return;
   }
 
   if (!isValidEmail(email)) {
-    setStatus("Zadej prosím platný e-mail.", "error");
+    setStatus("Zadejte prosím platný e-mail.", "error");
     return;
   }
 
@@ -172,7 +190,7 @@ form?.addEventListener("submit", async (event) => {
     if (error) {
       if (error.code === "23505") {
         setStatus(
-          "Tenhle e-mail už je na akci přihlášený. Kdybys potřeboval změnu, napiš pořadateli.",
+          "Tento e-mail už je na akci přihlášený. Pokud potřebujete změnu, napište pořadateli.",
           "error",
         );
         return;
@@ -184,7 +202,7 @@ form?.addEventListener("submit", async (event) => {
       }
 
       setStatus(
-        "Přihlášku se nepodařilo uložit. Zkus to prosím za chvíli znovu.",
+        "Přihlášku se nepodařilo uložit. Zkuste to prosím za chvíli znovu.",
         "error",
       );
       console.error("Supabase insert failed:", error);
@@ -193,13 +211,18 @@ form?.addEventListener("submit", async (event) => {
 
     form.reset();
     setStatus(
-      "Hotovo. Přihláška je uložená, těšíme se na tebe 20. 10. 2026 v 18:15.",
+      "Hotovo. Přihláška je uložená, těšíme se na vás 20. 10. 2026 v 18:15.",
       "success",
     );
+
+    if (CALENDAR_URL && successCalendarLink) {
+      successCalendarLink.hidden = false;
+    }
+
     await refreshRegistrationStatus();
   } catch (error) {
     setStatus(
-      "Spojení se nepodařilo navázat. Zkus to prosím za chvíli znovu.",
+      "Spojení se nepodařilo navázat. Zkuste to prosím za chvíli znovu.",
       "error",
     );
     console.error("Unexpected submit failure:", error);
