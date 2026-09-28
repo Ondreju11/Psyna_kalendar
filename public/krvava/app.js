@@ -114,7 +114,7 @@ function updateCapacityStatus(data) {
   capacityCopyElement.textContent = `zbývá ${remainingSpots} volných míst`;
 }
 
-async function refreshRegistrationStatus() {
+async function refreshRegistrationStatus({ redirectWhenFull = true } = {}) {
   const { data, error } = await supabase.rpc("get_event_registration_status", {
     target_event_slug: EVENT_SLUG,
   });
@@ -124,7 +124,7 @@ async function refreshRegistrationStatus() {
     return null;
   }
 
-  if (data?.is_full && !isFullPage) {
+  if (data?.is_full && !isFullPage && redirectWhenFull) {
     redirectToFullPage();
   }
 
@@ -219,7 +219,8 @@ form?.addEventListener("submit", async (event) => {
       successCalendarLink.hidden = false;
     }
 
-    await refreshRegistrationStatus();
+    // Poslední přihlášený má vidět potvrzení, ne stránku „plno“.
+    await refreshRegistrationStatus({ redirectWhenFull: false });
   } catch (error) {
     setStatus(
       "Spojení se nepodařilo navázat. Zkuste to prosím za chvíli znovu.",
