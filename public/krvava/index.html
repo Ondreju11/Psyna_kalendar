@@ -93,7 +93,7 @@
         </section>
 
         <section class="signup-card" aria-labelledby="signup-heading">
-          <div class="signup-intro">
+          <div id="signup-intro" class="signup-intro">
             <p class="eyebrow">Registrace</p>
             <h2 id="signup-heading">Zajistěte si místo</h2>
             <p id="signup-copy">
@@ -163,14 +163,17 @@
               role="status"
               aria-live="polite"
             ></p>
+          </form>
 
+          <div id="signup-done" class="signup-done" role="status" hidden>
+            <h3 id="signup-done-title"></h3>
+            <p id="signup-done-copy"></p>
             <a
               id="calendar-link-success"
               class="calendar-link"
               href="https://kalendar.psynaffuk.cz/BpQq9FP"
               target="_blank"
               rel="noreferrer"
-              hidden
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
@@ -178,7 +181,12 @@
               </svg>
               Přidat si akci do kalendáře
             </a>
-          </form>
+            <p id="signup-done-note" class="signup-done-note">
+              Kdybyste nakonec nemohli dorazit, dejte mi prosím vědět na
+              Facebooku nebo na ondrej.ulrich11@gmail.com, ať místo může dostat
+              někdo jiný.
+            </p>
+          </div>
         </section>
       </main>
     </div>

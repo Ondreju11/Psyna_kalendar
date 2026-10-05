@@ -276,9 +276,45 @@ h2 {
   outline-offset: 3px;
 }
 
-.signup-form .calendar-link {
+.signup-done .calendar-link {
   justify-self: start;
   margin: 0;
+}
+
+.signup-intro[hidden],
+.signup-form[hidden],
+.signup-done[hidden] {
+  display: none;
+}
+
+.signup-done {
+  display: grid;
+  gap: 18px;
+  padding: 30px 28px;
+  border: 1px solid rgba(241, 91, 93, 0.45);
+  border-radius: var(--radius-md);
+  background: rgba(188, 45, 47, 0.12);
+}
+
+.signup-done h3 {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2.4rem, 4.4vw, 3.2rem);
+  line-height: 1;
+}
+
+.signup-done p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.signup-done .signup-done-note {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  font-size: 0.98rem;
 }
 
 .story-block {

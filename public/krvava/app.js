@@ -4,8 +4,6 @@ const SUPABASE_URL = "https://jlflfwjmtaxmnuzmupne.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_O7FLqxVxwnsBqRMoNS-fjQ_h2jETQuO";
 const EVENT_SLUG = "krvava-hodina-2026-10-20";
-const CANCEL_COPY =
-  "Kdybyste nakonec nemohli dorazit, dejte mi prosím vědět na Facebooku nebo na ondrej.ulrich11@gmail.com, ať místo může dostat někdo jiný.";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -17,12 +15,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 
 const form = document.querySelector("#signup-form");
 const submitButton = document.querySelector("#submit-button");
-const signupHeadingElement = document.querySelector("#signup-heading");
+const signupIntroElement = document.querySelector("#signup-intro");
+const signupHeadingElement =document.querySelector("#signup-heading");
 const signupCopyElement = document.querySelector("#signup-copy");
 const statusElement = document.querySelector("#form-status");
 const capacityCountElement = document.querySelector("#capacity-count");
 const capacityCopyElement = document.querySelector("#capacity-copy");
 const capacityBarFillElement = document.querySelector("#capacity-bar-fill");
+const doneElement = document.querySelector("#signup-done");
+const doneTitleElement = document.querySelector("#signup-done-title");
+const doneCopyElement = document.querySelector("#signup-done-copy");
+const doneNoteElement = document.querySelector("#signup-done-note");
 const successCalendarLink = document.querySelector("#calendar-link-success");
 let isWaitlistMode = false;
 
@@ -59,7 +62,7 @@ function setWaitlistMode(enabled) {
 
   if (signupCopyElement) {
     signupCopyElement.textContent = enabled
-      ? "Všech 15 míst je obsazených, ale můžete se přihlásit jako náhradník. Když se místo uvolní, dáme vám vědět e-mailem."
+      ? "Všech 15 míst je obsazených, ale určitě se přihlaste jako náhradník. Je velká šance, že se někdo odhlásí, a jakmile se místo uvolní, napíšeme vám e-mail."
       : "Vyplňte jméno a e-mail a místo máte jisté. Pak už stačí jen dorazit včas.";
   }
 
@@ -179,23 +182,18 @@ form?.addEventListener("submit", async (event) => {
       return;
     }
 
-    form.reset();
-
-    if (status === "waitlist") {
-      setStatus(
-        "Kapacita je už plná, proto jste přihlášeni jako náhradník. Jakmile se uvolní místo, dáme vám vědět e-mailem.",
-        "success",
-      );
-    } else {
-      setStatus(
-        `Hotovo. Přihláška je uložená, těšíme se na vás 20. 10. 2026 v 18:15. ${CANCEL_COPY}`,
-        "success",
-      );
-    }
-
-    successCalendarLink.hidden = status === "waitlist";
-
-    await refreshRegistrationStatus();
+    // Po odeslání nahradí formulář výrazné potvrzení.
+    const isWaitlist = status === "waitlist";
+    doneTitleElement.textContent = isWaitlist ? "Jste náhradník" : "Jste přihlášeni!";
+    doneCopyElement.textContent = isWaitlist
+      ? "Kapacita je už plná, proto jste na seznamu náhradníků. Je velká šance, že se někdo odhlásí. Jakmile se místo uvolní, napíšeme vám e-mail."
+      : "Těšíme se na vás 20. 10. 2026 v 18:15. Dorazte prosím včas, po startu už se nelze připojit.";
+    successCalendarLink.hidden = isWaitlist;
+    doneNoteElement.hidden = isWaitlist;
+    signupIntroElement.hidden = true;
+    form.hidden = true;
+    doneElement.hidden = false;
+    doneElement.scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (error) {
     setStatus(
       "Spojení se nepodařilo navázat. Zkuste to prosím za chvíli znovu.",
