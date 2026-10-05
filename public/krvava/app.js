@@ -4,12 +4,8 @@ const SUPABASE_URL = "https://jlflfwjmtaxmnuzmupne.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_O7FLqxVxwnsBqRMoNS-fjQ_h2jETQuO";
 const EVENT_SLUG = "krvava-hodina-2026-10-20";
-const CONTACT_URL = "https://www.facebook.com/ondra.d.ulrich/";
-const CONTACT_LABEL = "https://www.facebook.com/ondra.d.ulrich/";
-// Krátký odkaz na akci z kalendar.psynaffuk.cz; prázdný = tlačítko se nezobrazí.
-const CALENDAR_URL = "https://kalendar.psynaffuk.cz/BpQq9FP";
-const FULL_PAGE_URL = new URL("full.html", window.location.href).toString();
-const SIGNUP_PAGE_URL = new URL("index.html", window.location.href).toString();
+const CANCEL_COPY =
+  "Kdybyste nakonec nemohli dorazit, dejte mi prosím vědět na Facebooku nebo na ondrej.ulrich11@gmail.com, ať místo může dostat někdo jiný.";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -21,40 +17,16 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 
 const form = document.querySelector("#signup-form");
 const submitButton = document.querySelector("#submit-button");
+const signupHeadingElement = document.querySelector("#signup-heading");
+const signupCopyElement = document.querySelector("#signup-copy");
 const statusElement = document.querySelector("#form-status");
-const contactLink = document.querySelector("#contact-link");
 const capacityCountElement = document.querySelector("#capacity-count");
 const capacityCopyElement = document.querySelector("#capacity-copy");
 const capacityBarFillElement = document.querySelector("#capacity-bar-fill");
-const calendarLinks = document.querySelectorAll("[data-calendar-link]");
 const successCalendarLink = document.querySelector("#calendar-link-success");
-const currentPage = document.body?.dataset.page ?? "signup";
-const isFullPage = currentPage === "full";
-
-if (contactLink) {
-  contactLink.textContent = CONTACT_LABEL;
-
-  if (CONTACT_URL && CONTACT_URL !== "#") {
-    contactLink.href = CONTACT_URL;
-    contactLink.target = "_blank";
-  } else {
-    contactLink.addEventListener("click", (event) => event.preventDefault());
-  }
-}
-
-for (const link of calendarLinks) {
-  if (CALENDAR_URL) {
-    link.href = CALENDAR_URL;
-  }
-
-  link.hidden = !CALENDAR_URL || link === successCalendarLink;
-}
+let isWaitlistMode = false;
 
 function setStatus(message, state = "") {
-  if (!statusElement) {
-    return;
-  }
-
   statusElement.textContent = message;
 
   if (state) {
@@ -64,23 +36,36 @@ function setStatus(message, state = "") {
   }
 }
 
-function setSubmitting(isSubmitting) {
-  submitButton.disabled = isSubmitting;
-  submitButton.textContent = isSubmitting
-    ? "Ukládám přihlášku..."
+function submitLabel() {
+  return isWaitlistMode
+    ? "Přihlásit se jako náhradník"
     : "Přihlásit se na Krvavou hodinu";
 }
 
-function redirectToFullPage() {
-  window.location.replace(FULL_PAGE_URL);
+function setSubmitting(isSubmitting) {
+  submitButton.disabled = isSubmitting;
+  submitButton.textContent = isSubmitting ? "Ukládám přihlášku..." : submitLabel();
 }
 
-function redirectToSignupPage() {
-  window.location.replace(SIGNUP_PAGE_URL);
-}
+// Po naplnění kapacity formulář zůstává, jen se z něj stává přihláška náhradníka.
+function setWaitlistMode(enabled) {
+  isWaitlistMode = enabled;
 
-function isEventFullError(error) {
-  return error?.code === "P0001" && error?.message === "EVENT_FULL";
+  if (signupHeadingElement) {
+    signupHeadingElement.textContent = enabled
+      ? "Kapacita je plná"
+      : "Zajistěte si místo";
+  }
+
+  if (signupCopyElement) {
+    signupCopyElement.textContent = enabled
+      ? "Všech 15 míst je obsazených, ale můžete se přihlásit jako náhradník. Když se místo uvolní, dáme vám vědět e-mailem."
+      : "Vyplňte jméno a e-mail a místo máte jisté. Pak už stačí jen dorazit včas.";
+  }
+
+  if (submitButton && !submitButton.disabled) {
+    submitButton.textContent = submitLabel();
+  }
 }
 
 function updateCapacityStatus(data) {
@@ -90,9 +75,7 @@ function updateCapacityStatus(data) {
 
   const registeredCount = Number(data.registered_count ?? 0);
   const registrationLimit = Number(data.registration_limit ?? 0);
-  const remainingSpots = Number(
-    data.remaining_spots ?? Math.max(registrationLimit - registeredCount, 0),
-  );
+  const remainingSpots = Number(data.remaining_spots);
 
   capacityCountElement.textContent = `${registeredCount}/${registrationLimit}`;
 
@@ -102,7 +85,7 @@ function updateCapacityStatus(data) {
   }
 
   if (data.is_full) {
-    capacityCopyElement.textContent = "kapacita je právě naplněná";
+    capacityCopyElement.textContent = "kapacita je naplněná · přihlaste se jako náhradník";
     return;
   }
 
@@ -114,7 +97,7 @@ function updateCapacityStatus(data) {
   capacityCopyElement.textContent = `zbývá ${remainingSpots} volných míst`;
 }
 
-async function refreshRegistrationStatus({ redirectWhenFull = true } = {}) {
+async function refreshRegistrationStatus() {
   const { data, error } = await supabase.rpc("get_event_registration_status", {
     target_event_slug: EVENT_SLUG,
   });
@@ -124,14 +107,7 @@ async function refreshRegistrationStatus({ redirectWhenFull = true } = {}) {
     return null;
   }
 
-  if (data?.is_full && !isFullPage && redirectWhenFull) {
-    redirectToFullPage();
-  }
-
-  if (!data?.is_full && isFullPage) {
-    redirectToSignupPage();
-  }
-
+  setWaitlistMode(Boolean(data?.is_full));
   updateCapacityStatus(data);
 
   return data;
@@ -179,12 +155,11 @@ form?.addEventListener("submit", async (event) => {
   setStatus("Odesílám přihlášku...");
 
   try {
-    const { error } = await supabase.from("event_registrations").insert({
-      event_slug: EVENT_SLUG,
+    // O tom, jestli je hráč přihlášený, nebo náhradník, rozhoduje databáze.
+    const { data: status, error } = await supabase.rpc("register_for_event", {
+      target_event_slug: EVENT_SLUG,
       full_name: fullName,
       email,
-      source_url: `${window.location.origin}${window.location.pathname}`,
-      user_agent: navigator.userAgent,
     });
 
     if (error) {
@@ -193,11 +168,6 @@ form?.addEventListener("submit", async (event) => {
           "Tento e-mail už je na akci přihlášený. Pokud potřebujete změnu, napište pořadateli.",
           "error",
         );
-        return;
-      }
-
-      if (isEventFullError(error)) {
-        redirectToFullPage();
         return;
       }
 
@@ -210,17 +180,22 @@ form?.addEventListener("submit", async (event) => {
     }
 
     form.reset();
-    setStatus(
-      "Hotovo. Přihláška je uložená, těšíme se na vás 20. 10. 2026 v 18:15.",
-      "success",
-    );
 
-    if (CALENDAR_URL && successCalendarLink) {
-      successCalendarLink.hidden = false;
+    if (status === "waitlist") {
+      setStatus(
+        "Kapacita je už plná, proto jste přihlášeni jako náhradník. Jakmile se uvolní místo, dáme vám vědět e-mailem.",
+        "success",
+      );
+    } else {
+      setStatus(
+        `Hotovo. Přihláška je uložená, těšíme se na vás 20. 10. 2026 v 18:15. ${CANCEL_COPY}`,
+        "success",
+      );
     }
 
-    // Poslední přihlášený má vidět potvrzení, ne stránku „plno“.
-    await refreshRegistrationStatus({ redirectWhenFull: false });
+    successCalendarLink.hidden = status === "waitlist";
+
+    await refreshRegistrationStatus();
   } catch (error) {
     setStatus(
       "Spojení se nepodařilo navázat. Zkuste to prosím za chvíli znovu.",
