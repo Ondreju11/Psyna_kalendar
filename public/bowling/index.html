@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bowling s Psynou | Přihlášení</title>
+    <meta
+      name="description"
+      content="Bowling s Psynou 11. 11. od 19:00 v Xbowlingu Žižkov. Kapacita je omezená, zapište se."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="pins" aria-hidden="true">🎳</p>
+        <h1>Bowling s&nbsp;Psynou!</h1>
+        <ul class="facts">
+          <li><span aria-hidden="true">📅</span> 11. 11. 2026 · 19:00–21:00</li>
+          <li>
+            <span aria-hidden="true">📍</span>
+            <a
+              href="https://maps.google.com/?q=Xbowling+Žižkov,+Pitterova+5,+Praha+3"
+              target="_blank"
+              rel="noreferrer"
+              >Xbowling Žižkov, Pitterova 5, Praha 3</a
+            >
+          </li>
+          <li><span aria-hidden="true">💸</span> 180 Kč, platí se předem</li>
+        </ul>
+      </header>
+
+      <p class="invite">
+        Milí studenti, blíží se listopad 🍂 a s ním i další várka úžasných akcí
+        🎉. Mezi ně patří i bowling, na který vás moc rádi zveme ☺️ Kapacita je
+        omezená, tak se zapište, dokud jsou volná místa 😆
+      </p>
+
+      <section class="card" aria-labelledby="signup-heading">
+        <div id="signup-intro">
+          <h2 id="signup-heading">Jdete taky?</h2>
+          <p class="capacity" aria-live="polite">
+            <strong id="capacity-count">…</strong>
+            <span id="capacity-copy">ověřujeme volná místa</span>
+          </p>
+          <p id="full-copy" class="full-copy" hidden>
+            Všech 16 míst je obsazených 😢 Pokud chcete na čekačku, napište
+            Míše na Instagram
+            <a href="https://www.instagram.com/misa._.pulp/" target="_blank" rel="noreferrer"
+              >@misa._.pulp</a
+            >.
+          </p>
+        </div>
+
+        <form id="signup-form" novalidate>
+          <label for="full-name">Jméno a příjmení</label>
+          <input
+            id="full-name"
+            name="fullName"
+            type="text"
+            autocomplete="name"
+            placeholder="Třeba Jana Nováková"
+            minlength="2"
+            maxlength="120"
+            required
+          />
+
+          <label for="email">E-mail</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="vas@email.cz"
+            maxlength="160"
+            required
+          />
+
+          <div class="honeypot" aria-hidden="true">
+            <label for="website">Web</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button id="submit-button" type="submit">Jdu na bowling! 🎳</button>
+          <p id="form-status" class="status" role="status" aria-live="polite"></p>        </form>
+
+        <div id="signup-done" role="status" hidden>
+          <h2 id="done-title">Jste přihlášeni! 🎉</h2>
+          <p id="done-copy">Teď už jen zaplatit. Naskenujte QR kód v bankovní aplikaci:</p>
+          <div id="payment">
+            <div id="qr" class="qr"></div>
+            <dl class="pay-details">
+              <dt>Účet</dt>
+              <dd>299813451/0300</dd>
+              <dt>Částka</dt>
+              <dd>180 Kč</dd>
+              <dt>Zpráva pro příjemce</dt>
+              <dd id="payment-message"></dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>
+          <strong>Platba:</strong> 180 Kč na účet 299813451/0300, do zprávy pro
+          příjemce napište „Jméno Příjmení - bowling“.
+        </p>
+        <p>
+          Dotazy, čekačka nebo když nakonec nemůžete dorazit:
+          <a href="https://www.instagram.com/misa._.pulp/" target="_blank" rel="noreferrer"
+            >@misa._.pulp</a
+          >
+          na Instagramu.
+        </p>
+        <p>Těšíme se na vás 😉 Míša</p>
+      </footer>
+    </main>
+
+    <noscript><p class="noscript">Pro přihlášení je potřeba zapnout JavaScript.</p></noscript>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
